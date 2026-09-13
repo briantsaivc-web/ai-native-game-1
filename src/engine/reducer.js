@@ -137,6 +137,9 @@ function startGame(state, action, data) {
   if (!data.balance.ai[action.difficulty]) reject("START_GAME", "unknownDifficulty");
   if (action.aiJobId !== undefined && action.aiJobId !== null &&
       !selectors.byId(data.jobs.jobs, action.aiJobId)) reject("START_GAME", "unknownAiJob");
+  // R-27：seed 必須是 0–4294967295 的整數（規格 §4 `seed: uint32`）；不再靜默 >>>0 轉換。
+  // `seed === (seed >>> 0)` 同時排除非數字、NaN、負數、小數與超出 uint32 的值。
+  if (typeof action.seed !== "number" || action.seed !== (action.seed >>> 0)) reject("START_GAME", "invalidSeed");
 
   var r = rng.seedRng(action.seed);
 
@@ -210,6 +213,7 @@ function draw(state, data) {
   var s = assign(state, { rng: o.rng });
   var doubled = false;
   var swanReturnedBy = null;
+  var amount = 0; // R-26：本顆實際入帳（翻倍後的值）；非收入籌碼為 0
 
   if (token.kind === "blackSwan") {
     var returners = selectors.assetsWithEffect(state, pid, data, "SWAN_RETURN_ONCE");
@@ -236,6 +240,7 @@ function draw(state, data) {
       if (doublers[d].effect.param === nth) { doubled = true; break; }
     }
     if (doubled) value = value + value;
+    amount = value;
     patch.pendingIncome = p.pendingIncome + value; // R-05
   } else if (token.kind === "insurance") {
     patch.drawn = p.drawn.concat([tokenId]);
@@ -249,7 +254,8 @@ function draw(state, data) {
   }
 
   s = withPlayer(s, pid, patch);
-  var drawnEvent = { token: tokenId, pendingIncome: patch.pendingIncome, blackSwanCount: patch.blackSwanCount };
+  // R-26：amount ＝ 本顆實際入帳（收入籌碼為面值或翻倍後的值；黑天鵝／保險／幸運為 0），供 UI 只讀 log 顯示。
+  var drawnEvent = { token: tokenId, amount: amount, pendingIncome: patch.pendingIncome, blackSwanCount: patch.blackSwanCount };
   if (doubled) drawnEvent.doubled = true;
   s = addLog(s, "TOKEN_DRAWN", drawnEvent);
   if (swanReturnedBy) s = addLog(s, "SWAN_RETURNED", { cardId: swanReturnedBy });

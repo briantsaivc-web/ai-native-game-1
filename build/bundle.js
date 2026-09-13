@@ -4,7 +4,8 @@
  * build/bundle.js：把 src/ 打包成單一 index.html（ADR-001 §2.4；規格 §9）。
  * - 只用 Node 內建 fs／path，零套件；不壓縮、不做 source map。
  * - 決定性：同樣的 src/ 產生 byte-identical 的 index.html（不寫時間戳）。
- * - 注入順序：<!-- INJECT:CSS -->（styles.css）→ <!-- INJECT:DATA -->（window.GAME_DATA）→ <!-- INJECT:JS -->（迷你模組註冊器＋各檔）。
+ * - 注入順序：<!-- INJECT:CSS -->（styles.css）→ <!-- INJECT:VERSION -->（window.GAME_VERSION，讀 package.json）→ <!-- INJECT:DATA -->（window.GAME_DATA）→ <!-- INJECT:JS -->（迷你模組註冊器＋各檔）。
+ * - 版本號唯一來源是 package.json 的 version（release-manager 於 G6 維護），UI 不寫死版本字串。
  * - 檔案清單寫死於 FILES（S4 新增檔案必須同步改這裡，見分派單 X-4）。
  * - 輸出後自檢：無 http://、https://、<link、@import、外部 src=；檔案 < 300 KB。
  *
@@ -61,11 +62,15 @@ function safeScript(s) { return s.replace(/<\/script/gi, "<\\/script"); }
 
 function build(outPath) {
   var template = read("ui/index.template.html");
-  ["<!-- INJECT:CSS -->", "<!-- INJECT:DATA -->", "<!-- INJECT:JS -->"].forEach(function (mark) {
+  ["<!-- INJECT:CSS -->", "<!-- INJECT:VERSION -->", "<!-- INJECT:DATA -->", "<!-- INJECT:JS -->"].forEach(function (mark) {
     if (template.indexOf(mark) < 0) throw new Error("template 缺少標記 " + mark);
   });
 
   var css = read("ui/styles.css").replace(/<\/style/gi, "<\\/style");
+
+  var version = String(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version || "");
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error("package.json 的 version 不是 X.Y.Z 格式：" + JSON.stringify(version));
+  var versionScript = "<script>\nwindow.GAME_VERSION = " + JSON.stringify(version) + ";\n</script>";
 
   var dataObj = {};
   DATA_FILES.forEach(function (name) { dataObj[name] = JSON.parse(read("data/" + name + ".json")); });
@@ -86,6 +91,7 @@ function build(outPath) {
   var jsBlock = js.join("\n");
   var html = template
     .replace("<!-- INJECT:CSS -->", function () { return cssBlock; })
+    .replace("<!-- INJECT:VERSION -->", function () { return versionScript; })
     .replace("<!-- INJECT:DATA -->", function () { return dataScript; })
     .replace("<!-- INJECT:JS -->", function () { return jsBlock; });
 
@@ -93,7 +99,7 @@ function build(outPath) {
   if (problems.length) throw new Error("產物自檢失敗：\n- " + problems.join("\n- "));
 
   fs.writeFileSync(outPath, html, "utf8");
-  return { bytes: Buffer.byteLength(html, "utf8"), files: FILES.length, data: DATA_FILES.length };
+  return { bytes: Buffer.byteLength(html, "utf8"), files: FILES.length, data: DATA_FILES.length, version: version };
 }
 
 /** 零外部資源與大小檢查（規格 A-05、T-UI-04）。 */
@@ -121,7 +127,7 @@ if (require.main === module) {
   if (idx > 0 && process.argv[idx + 1]) out = path.resolve(process.argv[idx + 1]);
   try {
     var r = build(out);
-    console.log("build 完成：" + path.relative(ROOT, out) + "（" + r.bytes + " bytes；" + r.files + " 個模組、" + r.data + " 個資料檔；零外部資源）");
+    console.log("build 完成：" + path.relative(ROOT, out) + "（v" + r.version + "；" + r.bytes + " bytes；" + r.files + " 個模組、" + r.data + " 個資料檔；零外部資源）");
   } catch (e) {
     console.error("build 失敗：" + e.message);
     process.exit(1);

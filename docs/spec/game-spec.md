@@ -104,8 +104,8 @@
   "log": [
     { "seq": 1, "round": 1, "player": null, "type": "GAME_STARTED", "seed": 20260913, "humanJobId": "j02", "aiJobId": "j02", "difficulty": "normal" },
     { "seq": 2, "round": 1, "player": "human", "type": "MARKET_REFILLED", "market": ["a03", "a07", "a11"] },
-    { "seq": 3, "round": 1, "player": "human", "type": "TOKEN_DRAWN", "token": "income_s", "pendingIncome": 10, "blackSwanCount": 0 },
-    { "seq": 4, "round": 1, "player": "human", "type": "TOKEN_DRAWN", "token": "income_m", "pendingIncome": 30, "blackSwanCount": 0 }
+    { "seq": 3, "round": 1, "player": "human", "type": "TOKEN_DRAWN", "token": "income_s", "amount": 10, "pendingIncome": 10, "blackSwanCount": 0 },
+    { "seq": 4, "round": 1, "player": "human", "type": "TOKEN_DRAWN", "token": "income_m", "amount": 20, "pendingIncome": 30, "blackSwanCount": 0 }
   ]
 }
 ```
@@ -155,7 +155,7 @@
 
 | Action | payload | 前置條件 | 狀態轉移 | log 事件 | RNG 次數 |
 |---|---|---|---|---|---|
-| `START_GAME` | `{ seed: uint32, jobId, difficulty, aiJobId? }` | `phase === "lobby"`；`jobId` 存在於 jobs.json；`difficulty` 存在於 balance.ai | 以 seed 初始化 rng；建兩位玩家（human 用 jobId，ai 用 `aiJobId ?? balance.aiDefaultJobId`）；deck ＝ 12 張 id 依 assets.json 順序，Fisher–Yates 洗牌；market ＝ 從 deck 頂端取 `marketSize` 張；`round=1`、`currentPlayer="human"`、`phase="draw"` | `GAME_STARTED`、`MARKET_REFILLED` | 11（Fisher–Yates n−1） |
+| `START_GAME` | `{ seed: uint32, jobId, difficulty, aiJobId? }` | `phase === "lobby"`；`jobId` 存在於 jobs.json；`difficulty` 存在於 balance.ai；`seed` 為 0–4294967295 的整數（R-27） | 以 seed 初始化 rng；建兩位玩家（human 用 jobId，ai 用 `aiJobId ?? balance.aiDefaultJobId`）；deck ＝ 12 張 id 依 assets.json 順序，Fisher–Yates 洗牌；market ＝ 從 deck 頂端取 `marketSize` 張；`round=1`、`currentPlayer="human"`、`phase="draw"` | `GAME_STARTED`、`MARKET_REFILLED` | 11（帶 aiJobId：Fisher–Yates n−1）／12（不帶：先 1 次選 AI 職業，見附錄 A.1） |
 | `DRAW` | `{}` | `phase === "draw"`；當前玩家 `bag` 有可抽籌碼（見 R-23） | 候選集 ＝ `luckyActive ? bag 去除 blackSwan : bag`；以 `rng.nextInt(候選數)` 取一顆移到 `drawn`；若 `luckyActive` 則設 false；依籌碼種類套用（R-05、R-06、R-12、R-13）與資產效果（R-14、R-15）；若 `blackSwanCount ≥ 門檻` → `busted=true`、結算入帳（R-07）、`phase="buy"` | `TOKEN_DRAWN`；爆倉時再加 `BUST`、`INCOME_SETTLED`；`SWAN_RETURN_ONCE` 觸發時加 `SWAN_RETURNED` | 1 |
 | `STOP` | `{}` | `phase === "draw"` | 結算：`cash += pendingIncome`（＋`STOP_BONUS`，R-17）；`phase="buy"` | `STOPPED`、`INCOME_SETTLED` | 0 |
 | `BUY_ASSET` | `{ cardId }` | `phase === "buy"`；`purchasedThisTurn === false`；`cardId ∈ market`；`cash ≥ card.cost` | `cash −= cost`；`assets.push(cardId)`；`market` 移除該卡（**不立即補**，下一位玩家回合開始才補）；`bag.push(...tokensAdded)`；`purchasedThisTurn=true` | `ASSET_BOUGHT` | 0 |
@@ -175,7 +175,7 @@
 |---|---|
 | `GAME_STARTED` | `seed, humanJobId, aiJobId, difficulty` |
 | `MARKET_REFILLED` | `market` |
-| `TOKEN_DRAWN` | `token, pendingIncome, blackSwanCount, doubled?`（NTH_INCOME_DOUBLE 觸發時 `doubled:true`） |
+| `TOKEN_DRAWN` | `token, amount, pendingIncome, blackSwanCount, doubled?`（`amount` ＝ 本顆實際入帳：收入籌碼為面值或翻倍後的值，黑天鵝／保險／幸運為 0；NTH_INCOME_DOUBLE 觸發時 `doubled:true`） |
 | `SWAN_RETURNED` | `cardId` |
 | `BUST` | `pendingBefore, settled` |
 | `STOPPED` | `pendingIncome, bonus` |
@@ -224,6 +224,7 @@
 ### 5.6 改規則資產（效果 type 見第 6.2 節）
 - [ ] **R-14** 擁有 `SWAN_RETURN_ONCE` 資產：每回合第一次翻到 blackSwan 時不計數、該籌碼直接放回 bag 尾端（不進 `drawn`），`swanReturnUsed=true`；第二次起正常計數。→ `T-R-14-swan-return-once`
 - [ ] **R-15** 擁有 `NTH_INCOME_DOUBLE` 資產：本回合第 `param` 顆收入籌碼（只數 income_*）價值 ×2。→ `T-R-15-nth-income-double`
+- [ ] **R-26** 每筆 `TOKEN_DRAWN` 事件的 `amount` ＝ 該顆實際入帳（翻倍後的值；非收入籌碼為 0），且本回合 `amount` 累加恆等於 `pendingIncome`；UI 顯示籌碼金額只讀 `amount`，不以面值自算。→ `T-R-26-token-drawn-amount`
 - [ ] **R-16** 擁有 `THRESHOLD_PLUS` 資產：該玩家門檻 ＝ `balance.blackSwanThreshold + param`；多張可疊加。→ `T-R-16-threshold-plus`
 - [ ] **R-17** 擁有 `STOP_BONUS` 資產：主動 STOP 且未爆倉時 `cash += param`；爆倉不給。→ `T-R-17-stop-bonus`
 
@@ -235,8 +236,9 @@
 ### 5.8 決定性
 - [ ] **R-21** 同 seed ＋ 同 action 序列 → 最終 state 深度相等（含 log）。→ `T-R-21-replay-deterministic`
 - [ ] **R-25** `reduce` 不修改輸入 state（深度凍結後呼叫不拋錯）。→ `T-R-25-reducer-immutable`
+- [ ] **R-27** `START_GAME.seed` 必須是 0–4294967295 的整數（`uint32`）；非數字、負數、小數、超界、缺漏一律拒絕 `REJECT:START_GAME:invalidSeed`，不得靜默轉換（UI 層 `parseSeed` 另擋輸入，engine 契約自身亦驗）。→ `T-R-27-start-game-seed-validation`
 
-**統計：規則 25 條（R-01～R-25，含 R-18～R-25 細則），對應測試名 30 個。**
+**統計：規則 27 條（R-01～R-27，含 R-18～R-27 細則），對應測試名 32 個。**
 
 ---
 

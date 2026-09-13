@@ -1,5 +1,5 @@
 "use strict";
-/** T-R-01～T-R-17、T-R-22～T-R-24：規格 §5 規則條文（勝負、翻牌、購買、收袋、特殊籌碼、改規則資產）。 */
+/** T-R-01～T-R-17、T-R-22～T-R-24、T-R-27：規格 §5 規則條文（勝負、翻牌、購買、收袋、特殊籌碼、改規則資產、開局 seed 驗證）。 */
 var test = require("node:test");
 var assert = require("node:assert/strict");
 var H = require("./helpers");
@@ -391,4 +391,34 @@ test("T-R-17-stop-bonus", function () {
   assert.equal(s3.players.human.busted, true);
   assert.equal(s3.players.human.cash, 100 + Math.floor(30 * B.bustKeepRatio));
   assert.equal(lastLog(s3, "STOPPED"), null);
+});
+
+/* ---------- 5.8 決定性：開局 seed 驗證（R-27；reviewer m-7、QA M-05） ---------- */
+
+test("T-R-27-start-game-seed-validation", function () {
+  var SEED_MAX = 4294967295;
+  function startWith(seed) {
+    var action = { type: "START_GAME", jobId: "j02", difficulty: "normal", aiJobId: "j02" };
+    if (seed !== "__omit__") action.seed = seed;
+    return engine.reduce(engine.initialState(), action, data);
+  }
+  // 合法邊界：0 與 4294967295 皆可開局，state.seed 原樣記錄。
+  assert.equal(startWith(0).seed, 0);
+  assert.equal(startWith(SEED_MAX).seed, SEED_MAX);
+  assert.equal(startWith(20260913).seed, 20260913);
+  // 不合法：一律拒絕 invalidSeed，不寫 log、不靜默轉換。
+  var bad = [
+    ["缺 seed", "__omit__"], ["undefined", undefined], ["null", null], ["字串 \"abc\"", "abc"], ["字串 \"7\"", "7"],
+    ["負數 −1", -1], ["小數 1.5", 1.5], ["超界 4294967296", SEED_MAX + 1], ["NaN", NaN], ["Infinity", Infinity], ["布林 true", true]
+  ];
+  bad.forEach(function (pair) {
+    assert.throws(function () { startWith(pair[1]); }, /^Error: REJECT:START_GAME:invalidSeed$/, pair[0] + " 應被拒絕");
+  });
+  // 拒絕時輸入 state 不變（initialState 仍為 lobby、log 空）。
+  var s0 = H.deepFreeze(engine.initialState());
+  assert.throws(function () { engine.reduce(s0, { type: "START_GAME", seed: -1, jobId: "j02", difficulty: "normal" }, data); }, /invalidSeed/);
+  assert.equal(s0.phase, "lobby");
+  assert.equal(s0.log.length, 0);
+  // 驗證順序：seed 錯誤在職業／難度錯誤之後才檢查（既有 unknownJob 拒絕不受影響）。
+  assert.throws(function () { engine.reduce(engine.initialState(), { type: "START_GAME", seed: -1, jobId: "nope", difficulty: "normal" }, data); }, /unknownJob/);
 });

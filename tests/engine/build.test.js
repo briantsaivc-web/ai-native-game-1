@@ -41,6 +41,17 @@ test("T-BUILD-01-single-file", function () {
   });
 });
 
+test("T-BUILD-03-version-injected", function () {
+  var dir = fs.mkdtempSync(path.join(os.tmpdir(), "jhjs-build-"));
+  var html = buildTo(path.join(dir, "index.html"));
+  var pkgVersion = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+  assert.match(pkgVersion, /^\d+\.\d+\.\d+$/, "package.json version 須為 X.Y.Z");
+  var m = html.match(/window\.GAME_VERSION = "([^"]+)";/);
+  assert.ok(m, "須內嵌 window.GAME_VERSION");
+  assert.strictEqual(m[1], pkgVersion, "內嵌版本須等於 package.json 的 version");
+  assert.ok(html.indexOf("<!-- INJECT:VERSION -->") < 0, "VERSION 標記須被替換");
+});
+
 test("T-BUILD-02-idempotent", function () {
   var dir = fs.mkdtempSync(path.join(os.tmpdir(), "jhjs-build-"));
   var a = buildTo(path.join(dir, "a.html"));
