@@ -18,7 +18,7 @@
 | 操作方式 | 觸控優先 |
 | 語言 | 繁體中文（UI、文件、註解、回報）；程式識別字英文 |
 | 製作人 | 人類老闆；所有硬停點由製作人拍板 |
-| 課程 repo | 【待定：course-recorder 的輸出目的地，由製作人提供路徑】 |
+| 課程 repo | `ai-native-game-course`（本機 `C:\Users\Carrie\ai-native-game-course`；GitHub `https://github.com/briantsaivc-web/ai-native-game-course`）；course-recorder 只寫該 repo 的 `chapters/` 與 `images/` |
 
 ## 2. 目錄地圖（改東西前先確認自己在哪一層）
 
