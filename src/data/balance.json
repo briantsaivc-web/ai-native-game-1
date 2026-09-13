@@ -1,0 +1,18 @@
+{
+  "rounds": 12,
+  "blackSwanThreshold": 3,
+  "bustKeepRatio": 0.5,
+  "marketSize": 3,
+  "insuranceCost": 40,
+  "purchasesPerTurn": 1,
+  "aiDefaultJobId": "j02",
+  "ai": {
+    "easy":   { "swanStopOffset": 2, "incomeStop": 40,  "buyInsurance": false },
+    "normal": { "swanStopOffset": 1, "incomeStop": 80,  "buyInsurance": true },
+    "hard":   { "swanStopOffset": 1, "incomeStop": 120, "buyInsurance": true }
+  },
+  "ui": {
+    "aiStepDelayMs": 400,
+    "tokenFlyMs": 300
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    {
+      "id": "j01",
+      "name": "滷味攤",
+      "style": "穩健",
+      "startCash": 80,
+      "startBag": { "income_s": 6, "income_m": 2, "blackSwan": 3 },
+      "flavor": "薄利多銷，客人穩，驚喜少。"
+    },
+    {
+      "id": "j02",
+      "name": "雞排攤",
+      "style": "平均",
+      "startCash": 100,
+      "startBag": { "income_s": 4, "income_m": 3, "income_l": 1, "blackSwan": 4 },
+      "flavor": "排隊是常態，油鍋跳電也是。"
+    },
+    {
+      "id": "j03",
+      "name": "飲料攤",
+      "style": "賭徒",
+      "startCash": 120,
+      "startBag": { "income_s": 2, "income_m": 3, "income_l": 2, "blackSwan": 5 },
+      "flavor": "天氣好賺翻，下雨全收攤。"
+    }
+  ]
+}

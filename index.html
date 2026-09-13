@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>見好就收</title>
+<!-- 本檔為 build/bundle.js 的模板；三個標記由 build 依 ADR-001 §2.4 順序替換。index.html 是產物，不要手改。 -->
+<style>
+/* ============================================================
+ * 見好就收 v0.1 樣式（依 docs/ui/v1-C.html「手機 App 式」抽出）
+ * - 手機直向：底部固定操作列＋市場抽屜
+ * - iPad 橫向（media query）：左資訊卡＋右側市場面板
+ * - 所有可點元素 ≥ 44×44；「再翻」「停手」≥ 88 高
+ * ============================================================ */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#f2f4f7;font-family:"PingFang TC","Noto Sans CJK TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",sans-serif;color:#111;-webkit-text-size-adjust:100%}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+:root{--p:#f0662e;--pd:#c94f1c;--ink:#1c1c1e;--mute:#6b7280;--line:#e5e7eb;--bg:#f2f4f7;--card:#fff;--bad:#d23c3c;--ok:#1f8a5b;--ai:#2f4bd6}
+.app{width:100%;height:100%;position:fixed;inset:0;background:var(--bg);color:var(--ink);overflow:hidden}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column}
+.bar{flex:0 0 auto;min-height:56px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:6px 16px;gap:8px}
+.bar .t{font-size:17px;font-weight:700}
+.bar .s{font-size:13px;color:var(--mute)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#111;color:#fff;border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700;white-space:nowrap}
+.pill.lite{background:#eef0f3;color:var(--ink)}
+.pill.ai{background:var(--ai)}
+.col,.full{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.body{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 132px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.card .h{font-size:13px;color:var(--mute);display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.card .h b{color:var(--ink)}
+.kv{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.kv .big{font-size:44px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kv .big small{font-size:14px;font-weight:500;color:var(--mute);letter-spacing:0;margin-left:6px}
+.kv .side{text-align:right;font-size:13px;color:var(--mute);line-height:1.5}
+.kv .side b{color:var(--ink);font-size:16px}
+.meter{display:flex;gap:6px;margin-top:10px}
+.meter i{flex:1;height:12px;border-radius:6px;background:#e5e7eb;display:block}
+.meter i.f{background:var(--bad)}
+.meter i.last{box-shadow:inset 0 0 0 2px var(--bad)}
+.mrow{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-top:6px;gap:8px;flex-wrap:wrap}
+.mrow b{color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+.chips .empty{font-size:13px;color:var(--mute);align-self:center}
+.chip{min-width:56px;height:44px;padding:0 12px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
+.chip.in{background:#fff3e8;color:#b3400e;box-shadow:inset 0 0 0 1.5px #f5c9ad}
+.chip.bs{background:#fdecec;color:var(--bad);box-shadow:inset 0 0 0 1.5px #f3b4b4}
+.chip.bs::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--bad);margin-right:6px}
+.chip.ins{background:#e7f5ee;color:var(--ok);box-shadow:inset 0 0 0 1.5px #b7e0c9}
+.chip.lk{background:#eef2ff;color:var(--ai);box-shadow:inset 0 0 0 1.5px #c5cdf5}
+.chip.fly{animation:chipFly .3s ease-out}
+@keyframes chipFly{from{transform:translateY(-32px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.ai{display:flex;align-items:center;gap:12px}
+.ai .av{width:44px;height:44px;border-radius:50%;background:#dbe4ff;color:var(--ai);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex:0 0 44px}
+.ai .av.me{background:#fff3e8;color:#b3400e}
+.ai .nm{font-weight:700;font-size:15px}
+.ai .st{font-size:13px;color:var(--mute)}
+.ai .num{margin-left:auto;text-align:right;font-size:13px;color:var(--mute);line-height:1.4;white-space:nowrap}
+.ai .num b{color:var(--ink);font-size:15px;display:block}
+.assets{display:flex;flex-wrap:wrap;gap:6px}
+.assets span{font-size:13px;background:#eef0f3;border-radius:999px;padding:6px 10px}
+.assets .empty{background:transparent;color:var(--mute)}
+.note{font-size:14px;line-height:1.5;color:var(--ink)}
+.note.ai{border-left:4px solid var(--ai);padding-left:10px}
+
+/* 錯誤橫幅（engine 拒絕或例外時顯示，不讓頁面死掉） */
+.err{background:#fdecec;color:var(--bad);border:1px solid #f3b4b4;border-radius:12px;padding:8px 8px 8px 14px;font-size:13px;display:flex;align-items:center;gap:8px}
+.err span{flex:1;word-break:break-all}
+.err button{min-width:44px;min-height:44px;border:0;background:#fff;border-radius:10px;font-family:inherit;color:var(--bad);font-weight:700}
+
+/* 底部操作列 */
+.dock{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:10px 16px 22px;display:flex;gap:10px;z-index:5}
+.dk{min-height:64px;min-width:44px;border:0;border-radius:16px;font-family:inherit;font-size:22px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;color:var(--ink);padding:0 8px}
+.dk:disabled{opacity:.45;cursor:default}
+.dk.draw{flex:2;min-height:88px;background:var(--p);color:#fff;box-shadow:0 4px 12px rgba(240,102,46,.35)}
+.dk.draw:active:not(:disabled){background:var(--pd)}
+.dk.stop{flex:1.4;min-height:88px;background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.dk.stop:active:not(:disabled){background:#eee}
+.dk.mk{flex:1;background:#eef0f3;color:var(--ink);font-size:13px;font-weight:600;position:relative}
+.dk.mk svg{width:24px;height:24px}
+.dk.mk .cnt{position:absolute;top:6px;right:8px;background:var(--bad);color:#fff;font-size:11px;border-radius:999px;padding:1px 6px}
+.dk.ghost{flex:1;background:#eef0f3;color:var(--ink);font-size:17px;font-weight:600}
+.dk.go{flex:2.4;background:var(--p);color:#fff}
+.dk.wait{flex:3;background:#eef2ff;color:var(--ai);font-size:16px;font-weight:700;line-height:1.3;text-align:center}
+.dk.fast{flex:1;background:#eef0f3;font-size:15px;font-weight:600}
+.dk.fast.on{background:var(--ai);color:#fff}
+
+/* 市場抽屜（手機：底部拉出；iPad：右側常駐） */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:6}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:80%;overflow:auto;background:var(--card);border-radius:20px 20px 0 0;padding:8px 16px 24px;transform:translateY(105%);transition:transform .25s;z-index:7;box-shadow:0 -6px 24px rgba(0,0,0,.2)}
+.scr.mkopen .scrim{opacity:1;pointer-events:auto}
+.scr.mkopen .sheet{transform:none}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:#d1d5db;margin:0 auto 10px}
+.sheet .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sheet .h b{font-size:17px}
+.sheet .h button{min-width:44px;min-height:44px;border:0;background:#eef0f3;border-radius:12px;font-family:inherit;font-size:14px;padding:0 12px}
+.item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);width:100%;background:transparent;border-left:0;border-right:0;border-bottom:0;font-family:inherit;text-align:left;color:var(--ink);cursor:pointer;min-height:64px}
+.item:first-of-type{border-top:0}
+.item .ic{width:44px;height:44px;border-radius:12px;background:#fff3e8;display:flex;align-items:center;justify-content:center;flex:0 0 44px;font-size:20px}
+.item .ic svg{width:26px;height:26px}
+.item .ic.ins{background:#e7f5ee}
+.item .tx{flex:1;min-width:0}
+.item .n{font-size:16px;font-weight:700}
+.item .d{font-size:12px;color:var(--mute);line-height:1.4}
+.item .p{font-size:16px;font-weight:800;white-space:nowrap}
+.item.dim .n,.item.dim .p{color:#9ca3af}
+.item.dim .d{color:#b0b5bd}
+.item.sel{background:#fff3e8;margin:0 -16px;padding:10px 16px;border-radius:12px;width:auto}
+.item .rad{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px #cbd0d6;flex:0 0 24px}
+.item.sel .rad{background:var(--p);box-shadow:inset 0 0 0 2px var(--p),inset 0 0 0 6px #fff}
+.item.bought .rad{background:var(--ok);box-shadow:none}
+
+/* 標題／設定 */
+.hero{padding:8px 4px 0}
+.hero h1{font-size:26px;margin:0 0 4px}
+.hero p{margin:0;color:var(--mute);font-size:14px}
+.title-hero{padding:32px 4px 8px;text-align:center}
+.title-hero h1{font-size:40px;margin:0 0 6px;letter-spacing:2px}
+.title-hero p{margin:0;color:var(--mute);font-size:15px}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;min-height:48px;border:0;border-radius:12px;background:#eef0f3;font-family:inherit;font-size:16px;font-weight:600;color:var(--ink)}
+.seg button.on{background:var(--ink);color:#fff}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--mute)}
+.field input{min-height:48px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);width:100%}
+.field .hint{font-size:12px;color:var(--mute)}
+
+/* 職業選擇 */
+.jobs{display:flex;flex-direction:column;gap:12px}
+.job{background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.06);border:0;font-family:inherit;text-align:left;cursor:pointer;color:var(--ink);display:flex;gap:14px;align-items:center;min-height:44px;position:relative;width:100%}
+.job .ic{width:56px;height:56px;border-radius:14px;background:#fff3e8;display:flex;align-items:center;justify-content:center;flex:0 0 56px;font-size:28px}
+.job .nm{font-size:18px;font-weight:700;display:flex;gap:8px;align-items:baseline}
+.job .nm small{font-size:12px;color:var(--p);font-weight:600;background:#fff3e8;padding:1px 8px;border-radius:999px}
+.job .meta{font-size:13px;color:var(--mute);margin-top:2px}
+.job .fl{font-size:12px;color:var(--mute);margin-top:4px}
+.job .dots{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.job .dots i{width:14px;height:14px;border-radius:4px;background:#f5c9ad;display:block}
+.job .dots i.m{background:#f0a06e}
+.job .dots i.l{background:#c94f1c}
+.job .dots i.b{background:var(--bad)}
+.job.sel{box-shadow:0 0 0 2px var(--p),0 1px 2px rgba(0,0,0,.06)}
+.job .chk{margin-left:auto;width:28px;height:28px;border-radius:50%;box-shadow:inset 0 0 0 2px #cbd0d6;flex:0 0 28px}
+.job.sel .chk{background:var(--p);box-shadow:none}
+.job.sel .chk::after{content:"";display:block;width:8px;height:14px;border:solid #fff;border-width:0 3px 3px 0;transform:translate(10px,4px) rotate(45deg)}
+
+/* 結算 */
+.sum{background:linear-gradient(135deg,#1c1c1e,#3a3a3f);color:#fff;border-radius:16px;padding:16px}
+.sum .h{color:#c7c9cf;font-size:13px;margin-bottom:4px}
+.sum .big{font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1}
+.sum .big.neg{color:#f3b4b4}
+.sum .rows{display:flex;gap:18px;margin-top:12px;font-size:13px;color:#c7c9cf;flex-wrap:wrap}
+.sum .rows b{color:#fff;display:block;font-size:16px}
+.sum.win{background:linear-gradient(135deg,#1f8a5b,#2fb37a)}
+.sum.lose{background:linear-gradient(135deg,#7a1f1f,#c94f1c)}
+.card.list{padding:6px 16px}
+.seedrow{display:flex;align-items:center;gap:10px}
+.seedrow code{flex:1;font-size:18px;font-weight:700;letter-spacing:1px;word-break:break-all}
+.seedrow button{min-width:88px;min-height:44px;border:0;background:#eef0f3;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink)}
+
+/* ===== iPad 橫向：左內容 ＋ 右市場面板 ===== */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  .app{font-size:16px}
+  .col{position:absolute;top:56px;bottom:0;left:0;right:400px;display:flex;flex-direction:column}
+  .body{padding:16px 24px 132px}
+  .dock{padding:12px 24px 20px}
+  .col .body{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:16px}
+  .col .body > .card:first-of-type{grid-column:1/3}
+  .col .body > .err{grid-column:1/3}
+  .col .body .chips{gap:10px}
+  .dk{min-height:84px;font-size:28px}
+  .dk.draw,.dk.stop{min-height:96px}
+  .dk.mk{display:none}
+  .scrim{display:none}
+  .sheet{position:absolute;left:auto;right:0;top:56px;bottom:0;width:400px;max-height:none;transform:none;border-radius:0;border-left:1px solid var(--line);box-shadow:none;padding:16px 20px;overflow:auto}
+  .sheet .grab,.sheet .h button{display:none}
+  .kv .big{font-size:56px}
+  .chip{height:52px;font-size:18px}
+  .jobs{flex-direction:row;align-items:stretch}
+  .job{flex:1;flex-direction:column;align-items:flex-start;padding:20px}
+  .job .ic{width:72px;height:72px;flex-basis:72px;font-size:36px}
+  .job .chk{position:absolute;top:16px;right:16px;margin:0}
+  .full{position:absolute;top:56px;bottom:0;left:0;right:0;display:flex;flex-direction:column}
+  .full .body{flex-direction:row;flex-wrap:wrap;align-content:flex-start;gap:16px}
+  .full .body > *{flex:1 1 45%}
+  .full .body .hero,.full .body .title-hero,.full .body .jobs,.full .body .err{flex-basis:100%}
+  .full .dock{right:0}
+  .sum .big{font-size:64px}
+  .title-hero h1{font-size:52px}
+}
+
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script>
+window.GAME_DATA = {"jobs":{"jobs":[{"id":"j01","name":"滷味攤","style":"穩健","startCash":80,"startBag":{"income_s":6,"income_m":2,"blackSwan":3},"flavor":"薄利多銷，客人穩，驚喜少。"},{"id":"j02","name":"雞排攤","style":"平均","startCash":100,"startBag":{"income_s":4,"income_m":3,"income_l":1,"blackSwan":4},"flavor":"排隊是常態，油鍋跳電也是。"},{"id":"j03","name":"飲料攤","style":"賭徒","startCash":120,"startBag":{"income_s":2,"income_m":3,"income_l":2,"blackSwan":5},"flavor":"天氣好賺翻，下雨全收攤。"}]},"assets":{"assets":[{"id":"a01","name":"第二口鍋","cost":60,"value":40,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_s","income_s"],"flavor":"一次炸兩份，客人少等一半。"},{"id":"a02","name":"保溫箱","cost":70,"value":50,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_s","income_m"],"flavor":"涼了也能賣，只是賣得慢。"},{"id":"a03","name":"冷藏櫃","cost":100,"value":70,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_m","income_m"],"flavor":"食材撐得久，敢進貨了。"},{"id":"a04","name":"招牌燈箱","cost":90,"value":60,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_m","lucky"],"flavor":"遠遠就看得到，運氣也跟著來。"},{"id":"a05","name":"雨棚","cost":110,"value":80,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["insurance","income_s"],"flavor":"下雨？照賣。"},{"id":"a06","name":"外送平台","cost":140,"value":100,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_l","income_s","blackSwan"],"flavor":"單量暴增，抽成與負評也是。"},{"id":"a07","name":"老闆娘的好人緣","cost":150,"value":100,"effect":{"type":"SWAN_RETURN_ONCE","param":1},"tokensAdded":[],"flavor":"稽查員來了？先喝杯茶。每回合第一顆黑天鵝放回袋子。"},{"id":"a08","name":"收銀機","cost":120,"value":90,"effect":{"type":"STOP_BONUS","param":15},"tokensAdded":[],"flavor":"收攤結帳不漏錢。主動停手多拿 15。"},{"id":"a09","name":"第三口鍋","cost":160,"value":110,"effect":{"type":"NTH_INCOME_DOUBLE","param":3},"tokensAdded":[],"flavor":"翻到第 3 顆收入籌碼時價值翻倍。"},{"id":"a10","name":"發電機","cost":180,"value":130,"effect":{"type":"THRESHOLD_PLUS","param":1},"tokensAdded":[],"flavor":"跳電不怕。黑天鵝門檻 +1。"},{"id":"a11","name":"常客名單","cost":200,"value":240,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_l","income_l"],"flavor":"老客人就是資產。"},{"id":"a12","name":"老字號招牌","cost":260,"value":320,"effect":{"type":"ADD_TOKENS","param":0},"tokensAdded":["income_m"],"flavor":"三十年老店，名字本身就值錢。"}]},"tokens":{"tokens":[{"id":"income_s","name":"小單","kind":"income","value":10},{"id":"income_m","name":"中單","kind":"income","value":20},{"id":"income_l","name":"大單","kind":"income","value":40},{"id":"blackSwan","name":"黑天鵝","kind":"blackSwan","value":0,"eventNames":["下雨","衛生稽查","跳電","隔壁攤大特價","瓦斯用完"]},{"id":"insurance","name":"保險籌碼","kind":"insurance","value":0},{"id":"lucky","name":"幸運籌碼","kind":"lucky","value":0}]},"balance":{"rounds":12,"blackSwanThreshold":3,"bustKeepRatio":0.5,"marketSize":3,"insuranceCost":40,"purchasesPerTurn":1,"aiDefaultJobId":"j02","ai":{"easy":{"swanStopOffset":2,"incomeStop":40,"buyInsurance":false},"normal":{"swanStopOffset":1,"incomeStop":80,"buyInsurance":true},"hard":{"swanStopOffset":1,"incomeStop":120,"buyInsurance":true}},"ui":{"aiStepDelayMs":400,"tokenFlyMs":300}}};
+</script>
+<script>
+(function () {
+"use strict";
+var __mods = {}, __cache = {};
+function __define(k, f) { __mods[k] = f; }
+function __resolve(from, req) {
+  var base = from.split('/'); base.pop();
+  var parts = req.split('/');
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i] === '.' || parts[i] === '') continue;
+    if (parts[i] === '..') base.pop(); else base.push(parts[i]);
+  }
+  var k = base.join('/');
+  if (__mods[k]) return k;
+  if (__mods[k + '.js']) return k + '.js';
+  if (__mods[k + '/index.js']) return k + '/index.js';
+  throw new Error('module not found: ' + req + ' (from ' + from + ')');
+}
+function __require(k) {
+  if (__cache[k]) return __cache[k].exports;
+  var m = { exports: {} }; __cache[k] = m;
+  __mods[k](m, m.exports, function (req) { return __require(__resolve(k, req)); });
+  return m.exports;
+}
+__define("engine/rng.js", function (module, exports, require) {
+"use strict";
+/**
+ * seeded RNG：mulberry32（依 ADR-001 §2.2）。
+ * - 狀態只有一個 uint32（`{ s }`），直接放進 state.rng，重放只需記 seed。
+ * - 每次呼叫回傳「新狀態 ＋ 值」，不使用閉包或可變內部狀態（純函數）。
+ * - 只用 Math.imul 與 >>>，Node 與 iPad Safari 行為一致。
+ * 下列十六進位常數為演算法常數，不是遊戲平衡數值。
+ */
+
+/** 以 seed 建立 RNG 狀態；seed 會被強制轉成 uint32。 */
+function seedRng(seed) {
+  return { s: seed >>> 0 };
+}
+
+/** 取下一個亂數。回傳 { rng: 新狀態, value: [0,1) 浮點 }。 */
+function next(rng) {
+  var t = (rng.s + 0x6D2B79F5) >>> 0;
+  var r = Math.imul(t ^ (t >>> 15), 1 | t);
+  r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+  return { rng: { s: t }, value: ((r ^ (r >>> 14)) >>> 0) / 4294967296 };
+}
+
+/** 取 0..n-1 的整數（n ≥ 1）。回傳 { rng, value }。 */
+function nextInt(rng, n) {
+  var o = next(rng);
+  return { rng: o.rng, value: Math.floor(o.value * n) };
+}
+
+module.exports = { seedRng: seedRng, next: next, nextInt: nextInt };
+
+});
+__define("engine/selectors.js", function (module, exports, require) {
+"use strict";
+/**
+ * selectors：由 state ＋ data 導出的唯讀值（規格 §2「淨資產」、§7、§8.3）。
+ * 全部為純函數，不修改輸入。UI 不得自行計算這些值。
+ */
+
+/** 在 list 中依 id 查表；找不到回傳 undefined。 */
+function byId(list, id) {
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === id) return list[i];
+  }
+  return undefined;
+}
+
+/** 玩家已購資產卡的物件陣列（依購買順序）。 */
+function ownedAssets(state, playerId, data) {
+  var ids = state.players[playerId].assets;
+  var out = [];
+  for (var i = 0; i < ids.length; i++) {
+    var card = byId(data.assets.assets, ids[i]);
+    if (card) out.push(card);
+  }
+  return out;
+}
+
+/** 玩家擁有的、指定效果型別的資產卡。 */
+function assetsWithEffect(state, playerId, data, effectType) {
+  return ownedAssets(state, playerId, data).filter(function (card) {
+    return card.effect && card.effect.type === effectType;
+  });
+}
+
+/** R-03：淨資產 ＝ cash ＋ 已購資產 value 總和（pendingIncome 不算）。 */
+function netWorth(state, playerId, data) {
+  var p = state.players[playerId];
+  var total = p.cash;
+  var cards = ownedAssets(state, playerId, data);
+  for (var i = 0; i < cards.length; i++) total += cards[i].value;
+  return total;
+}
+
+/** R-16：門檻 ＝ balance.blackSwanThreshold ＋ 所有 THRESHOLD_PLUS 的 param（可疊加）。 */
+function threshold(state, playerId, data) {
+  var base = data.balance.blackSwanThreshold;
+  var cards = assetsWithEffect(state, playerId, data, "THRESHOLD_PLUS");
+  for (var i = 0; i < cards.length; i++) base += cards[i].effect.param;
+  return base;
+}
+
+/**
+ * R-12／R-23：可抽候選集。回傳「bag 索引」陣列（依 bag 順序）。
+ * luckyActive 時排除 blackSwan；否則整個 bag。
+ * 回傳索引而非 tokenId，讓 reducer 能以 nextInt(候選數) 直接定位要移出的籌碼。
+ */
+function candidates(state, playerId) {
+  var p = state.players[playerId];
+  var out = [];
+  for (var i = 0; i < p.bag.length; i++) {
+    if (p.luckyActive && p.bag[i] === "blackSwan") continue;
+    out.push(i);
+  }
+  return out;
+}
+
+/** 袋中各籌碼數量統計 `{ [tokenId]: count }`，供 UI 顯示剩餘。 */
+function bagSummary(state, playerId) {
+  var bag = state.players[playerId].bag;
+  var out = {};
+  for (var i = 0; i < bag.length; i++) {
+    out[bag[i]] = (out[bag[i]] || 0) + 1;
+  }
+  return out;
+}
+
+/** bag 中 blackSwan 的數量（只看 bag，不看 drawn；BUY_INSURANCE 前置條件用）。 */
+function bagBlackSwanCount(state, playerId) {
+  var bag = state.players[playerId].bag;
+  var n = 0;
+  for (var i = 0; i < bag.length; i++) if (bag[i] === "blackSwan") n++;
+  return n;
+}
+
+module.exports = {
+  byId: byId,
+  ownedAssets: ownedAssets,
+  assetsWithEffect: assetsWithEffect,
+  netWorth: netWorth,
+  threshold: threshold,
+  candidates: candidates,
+  bagSummary: bagSummary,
+  bagBlackSwanCount: bagBlackSwanCount
+};
+
+});
+__define("engine/ai.js", function (module, exports, require) {
+"use strict";
+/**
+ * AI 對手決策（規格 §7、R-18～R-20）。
+ * 純函數：不讀時間、不呼叫 RNG、不修改 state／data。
+ * 每次只回傳「一個」action；AI_TURN 由 reducer 逐步套用。
+ */
+var selectors = require("./selectors");
+
+/**
+ * 以指定座位（playerId）與難度參數決策。
+ * decideAi 只是 playerId="ai"、difficulty=state.difficulty 的特例；
+ * 拆出 decideFor 是為了讓測試能用同一套策略驅動 human 座位做 AI 對 AI 自動對局，
+ * 不必在測試裡複製決策邏輯。
+ * 回傳 { action, reason }；不在 draw／buy 階段回傳 null。
+ */
+function decideFor(state, playerId, difficulty, data) {
+  if (state.phase !== "draw" && state.phase !== "buy") return null;
+  if (state.currentPlayer !== playerId) return null;
+  var params = data.balance.ai[difficulty];
+  if (!params) return null;
+  var p = state.players[playerId];
+
+  if (state.phase === "draw") {
+    // R-19：候選集為空 → STOP；黑天鵝值達（門檻 − offset）→ STOP；暫存收入達 incomeStop → STOP；否則 DRAW。
+    if (selectors.candidates(state, playerId).length === 0) {
+      return { action: { type: "STOP" }, reason: "noCandidates" };
+    }
+    var th = selectors.threshold(state, playerId, data);
+    if (p.blackSwanCount >= th - params.swanStopOffset) {
+      return { action: { type: "STOP" }, reason: "swanStop" };
+    }
+    if (p.pendingIncome >= params.incomeStop) {
+      return { action: { type: "STOP" }, reason: "incomeStop" };
+    }
+    return { action: { type: "DRAW" }, reason: "push" };
+  }
+
+  // buy 階段（R-20）
+  if (state.purchasedThisTurn) {
+    return { action: { type: "END_TURN" }, reason: "done" };
+  }
+  // 買得起的卡，依 cost 降冪、同價依 market 索引升冪（排序穩定：先建索引再比較）。
+  var affordable = [];
+  for (var i = 0; i < state.market.length; i++) {
+    var card = selectors.byId(data.assets.assets, state.market[i]);
+    if (card && card.cost <= p.cash) affordable.push({ idx: i, card: card });
+  }
+  affordable.sort(function (a, b) {
+    if (b.card.cost !== a.card.cost) return b.card.cost - a.card.cost;
+    return a.idx - b.idx;
+  });
+  if (affordable.length > 0) {
+    return { action: { type: "BUY_ASSET", cardId: affordable[0].card.id }, reason: "buyMostExpensive" };
+  }
+  if (params.buyInsurance === true &&
+      p.cash >= data.balance.insuranceCost &&
+      selectors.bagBlackSwanCount(state, playerId) > 0) {
+    return { action: { type: "BUY_INSURANCE" }, reason: "insuranceFallback" };
+  }
+  return { action: { type: "END_TURN" }, reason: "nothingToBuy" };
+}
+
+/**
+ * 規格 §7 介面：decideAi(state, data) → { action, reason }。
+ * 只在 currentPlayer==="ai" 且 phase ∈ {draw, buy} 有定義，否則回傳 null。
+ * 難度讀 state.difficulty → data.balance.ai[difficulty]。
+ */
+function decideAi(state, data) {
+  return decideFor(state, "ai", state.difficulty, data);
+}
+
+module.exports = { decideAi: decideAi, decideFor: decideFor };
+
+});
+__define("engine/reducer.js", function (module, exports, require) {
+"use strict";
+/**
+ * reducer：遊戲狀態機（規格 §3 schema、§4 action、§5 規則；ADR-001 §2.1）。
+ * - reduce(state, action, data) → 新 state；不修改輸入（淺層複製＋只替換被改的分支；log 用 concat）。
+ * - 前置條件不成立 → throw Error("REJECT:<TYPE>:<reason>")，不回傳原 state、不寫 log。
+ * - 所有隨機只透過 rng.nextInt，且狀態隨 state.rng 流動。
+ * - engine 內出現的數字只允許 0、1、−1 與索引運算；平衡數值一律從 data 讀。
+ */
+var rng = require("./rng");
+var selectors = require("./selectors");
+var ai = require("./ai");
+
+var SPEC_VERSION = "0.1";
+
+/* ---------- 內部工具 ---------- */
+
+function reject(type, reason) {
+  throw new Error("REJECT:" + type + ":" + reason);
+}
+
+/** 淺層複製物件並套用覆寫欄位。 */
+function assign(base, patch) {
+  var out = {};
+  var k;
+  for (k in base) if (Object.prototype.hasOwnProperty.call(base, k)) out[k] = base[k];
+  for (k in patch) if (Object.prototype.hasOwnProperty.call(patch, k)) out[k] = patch[k];
+  return out;
+}
+
+/** 回傳替換了某位玩家的新 state。 */
+function withPlayer(state, playerId, patch) {
+  var players = assign(state.players, {});
+  players[playerId] = assign(state.players[playerId], patch);
+  return assign(state, { players: players });
+}
+
+/** 追加一筆 log 事件（seq 遞增，player 為當時 currentPlayer）。 */
+function addLog(state, type, extra) {
+  var event = { seq: state.log.length + 1, round: state.round, player: state.currentPlayer, type: type };
+  for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) event[k] = extra[k];
+  return assign(state, { log: state.log.concat([event]) });
+}
+
+/** 建立一位玩家（規格 §3.2 初始值）。startBag 依 tokens.json 順序展開為 tokenId 陣列。 */
+function makePlayer(playerId, jobId, data) {
+  var job = selectors.byId(data.jobs.jobs, jobId);
+  var bag = [];
+  // 依 tokens.json 的順序展開，確保展開結果決定性（不依賴物件 key 順序）。
+  var tokens = data.tokens.tokens;
+  for (var i = 0; i < tokens.length; i++) {
+    var count = job.startBag[tokens[i].id] || 0;
+    for (var c = 0; c < count; c++) bag.push(tokens[i].id);
+  }
+  return {
+    id: playerId,
+    jobId: jobId,
+    cash: job.startCash,
+    bag: bag,
+    drawn: [],
+    pendingIncome: 0,
+    blackSwanCount: 0,
+    assets: [],
+    luckyActive: false,
+    swanReturnUsed: false,
+    busted: false
+  };
+}
+
+/** 補市場：從 deck 頂端依序取卡直到 market 滿或 deck 空；無 RNG。回傳含 MARKET_REFILLED 事件的新 state。 */
+function refillMarket(state, data) {
+  var market = state.market.slice();
+  var deck = state.deck.slice();
+  while (market.length < data.balance.marketSize && deck.length > 0) {
+    market.push(deck.shift());
+  }
+  var s = assign(state, { market: market, deck: deck });
+  return addLog(s, "MARKET_REFILLED", { market: market.slice() });
+}
+
+/** 結算入帳（STOP 或爆倉共用）：cash += amount，寫 INCOME_SETTLED。 */
+function settleIncome(state, playerId, amount) {
+  var cashAfter = state.players[playerId].cash + amount;
+  var s = withPlayer(state, playerId, { cash: cashAfter });
+  return addLog(s, "INCOME_SETTLED", { amount: amount, cashAfter: cashAfter });
+}
+
+/** 兩人淨資產快照（ROUND_ENDED／GAME_OVER 用）。 */
+function netWorthSnapshot(state, data) {
+  return {
+    human: selectors.netWorth(state, "human", data),
+    ai: selectors.netWorth(state, "ai", data)
+  };
+}
+
+/* ---------- 初始狀態 ---------- */
+
+/** 大廳狀態：phase="lobby"，其餘為空值；key 集合與規格 §3.1 完全一致。 */
+function emptyPlayer(playerId) {
+  return {
+    id: playerId,
+    jobId: null,
+    cash: 0,
+    bag: [],
+    drawn: [],
+    pendingIncome: 0,
+    blackSwanCount: 0,
+    assets: [],
+    luckyActive: false,
+    swanReturnUsed: false,
+    busted: false
+  };
+}
+
+function initialState() {
+  return {
+    specVersion: SPEC_VERSION,
+    seed: null,
+    rng: { s: 0 },
+    phase: "lobby",
+    round: 1,
+    currentPlayer: "human",
+    difficulty: null,
+    purchasedThisTurn: false,
+    players: { human: emptyPlayer("human"), ai: emptyPlayer("ai") },
+    market: [],
+    deck: [],
+    winner: null,
+    log: []
+  };
+}
+
+/* ---------- 各 action ---------- */
+
+function startGame(state, action, data) {
+  if (state.phase !== "lobby") reject("START_GAME", "phase");
+  if (!selectors.byId(data.jobs.jobs, action.jobId)) reject("START_GAME", "unknownJob");
+  if (!data.balance.ai[action.difficulty]) reject("START_GAME", "unknownDifficulty");
+  if (action.aiJobId !== undefined && action.aiJobId !== null &&
+      !selectors.byId(data.jobs.jobs, action.aiJobId)) reject("START_GAME", "unknownAiJob");
+
+  var r = rng.seedRng(action.seed);
+
+  // 規格附錄 A 第 1 題（製作人拍板）：未帶 aiJobId 時，以 rng 從 jobs.json 隨機取一張（1 次 RNG，在洗牌之前）。
+  var aiJobId = action.aiJobId;
+  if (aiJobId === undefined || aiJobId === null) {
+    var pick = rng.nextInt(r, data.jobs.jobs.length);
+    r = pick.rng;
+    aiJobId = data.jobs.jobs[pick.value].id;
+  }
+
+  // deck ＝ 12 張 id 依 assets.json 順序，Fisher–Yates 洗牌（n−1 次 RNG）。
+  var deck = data.assets.assets.map(function (card) { return card.id; });
+  for (var i = deck.length - 1; i > 0; i--) {
+    var o = rng.nextInt(r, i + 1);
+    r = o.rng;
+    var tmp = deck[i]; deck[i] = deck[o.value]; deck[o.value] = tmp;
+  }
+
+  var s = assign(state, {
+    seed: action.seed >>> 0,
+    rng: r,
+    phase: "draw",
+    round: 1,
+    currentPlayer: "human",
+    difficulty: action.difficulty,
+    purchasedThisTurn: false,
+    players: {
+      human: makePlayer("human", action.jobId, data),
+      ai: makePlayer("ai", aiJobId, data)
+    },
+    market: [],
+    deck: deck,
+    winner: null,
+    log: []
+  });
+  // GAME_STARTED 的 player 為 null（規格 §4.1）。
+  var event = { seq: 1, round: 1, player: null, type: "GAME_STARTED",
+    seed: s.seed, humanJobId: action.jobId, aiJobId: aiJobId, difficulty: action.difficulty };
+  s = assign(s, { log: [event] });
+  return refillMarket(s, data);
+}
+
+/**
+ * DRAW（分派單 X-9 規定的順序）：
+ * lucky 過濾 → 抽出 → SWAN_RETURN_ONCE（若為黑天鵝且未用）→ 計數／加收入（含 NTH_INCOME_DOUBLE）
+ * → insurance 籌碼抵銷 → 爆倉判定。
+ */
+function draw(state, data) {
+  if (state.phase !== "draw") reject("DRAW", "phase");
+  var pid = state.currentPlayer;
+  var p = state.players[pid];
+  var cands = selectors.candidates(state, pid);
+  if (cands.length === 0) reject("DRAW", "noCandidates");
+
+  // 抽出：以 nextInt(候選數) 選一個候選，對應回 bag 索引。
+  var o = rng.nextInt(state.rng, cands.length);
+  var bagIndex = cands[o.value];
+  var tokenId = p.bag[bagIndex];
+  var token = selectors.byId(data.tokens.tokens, tokenId);
+  var bag = p.bag.slice(0, bagIndex).concat(p.bag.slice(bagIndex + 1));
+
+  var patch = {
+    bag: bag,
+    drawn: p.drawn,
+    pendingIncome: p.pendingIncome,
+    blackSwanCount: p.blackSwanCount,
+    luckyActive: false, // R-12：一次 DRAW 消耗幸運
+    swanReturnUsed: p.swanReturnUsed
+  };
+  var s = assign(state, { rng: o.rng });
+  var doubled = false;
+  var swanReturnedBy = null;
+
+  if (token.kind === "blackSwan") {
+    var returners = selectors.assetsWithEffect(state, pid, data, "SWAN_RETURN_ONCE");
+    if (returners.length > 0 && !p.swanReturnUsed) {
+      // R-14：不計數、直接放回 bag 尾端（不進 drawn），不消耗 RNG。
+      patch.bag = bag.concat([tokenId]);
+      patch.swanReturnUsed = true;
+      swanReturnedBy = returners[0].id;
+    } else {
+      patch.drawn = p.drawn.concat([tokenId]);
+      patch.blackSwanCount = p.blackSwanCount + 1; // R-06
+    }
+  } else if (token.kind === "income") {
+    patch.drawn = p.drawn.concat([tokenId]);
+    // R-15：本回合第 n 顆收入籌碼（只數 drawn 中 kind==="income"，含本顆）。
+    var nth = 0;
+    for (var i = 0; i < patch.drawn.length; i++) {
+      var t = selectors.byId(data.tokens.tokens, patch.drawn[i]);
+      if (t && t.kind === "income") nth++;
+    }
+    var value = token.value;
+    var doublers = selectors.assetsWithEffect(state, pid, data, "NTH_INCOME_DOUBLE");
+    for (var d = 0; d < doublers.length; d++) {
+      if (doublers[d].effect.param === nth) { doubled = true; break; }
+    }
+    if (doubled) value = value + value;
+    patch.pendingIncome = p.pendingIncome + value; // R-05
+  } else if (token.kind === "insurance") {
+    patch.drawn = p.drawn.concat([tokenId]);
+    // R-13：抵銷 1 點，不低於 0。
+    patch.blackSwanCount = p.blackSwanCount > 0 ? p.blackSwanCount - 1 : 0;
+  } else if (token.kind === "lucky") {
+    patch.drawn = p.drawn.concat([tokenId]);
+    patch.luckyActive = true; // R-12
+  } else {
+    patch.drawn = p.drawn.concat([tokenId]);
+  }
+
+  s = withPlayer(s, pid, patch);
+  var drawnEvent = { token: tokenId, pendingIncome: patch.pendingIncome, blackSwanCount: patch.blackSwanCount };
+  if (doubled) drawnEvent.doubled = true;
+  s = addLog(s, "TOKEN_DRAWN", drawnEvent);
+  if (swanReturnedBy) s = addLog(s, "SWAN_RETURNED", { cardId: swanReturnedBy });
+
+  // R-07：爆倉判定。
+  var th = selectors.threshold(s, pid, data);
+  if (patch.blackSwanCount >= th) {
+    var pendingBefore = patch.pendingIncome;
+    var settled = Math.floor(pendingBefore * data.balance.bustKeepRatio);
+    s = withPlayer(s, pid, { busted: true });
+    s = addLog(s, "BUST", { pendingBefore: pendingBefore, settled: settled });
+    s = settleIncome(s, pid, settled);
+    s = assign(s, { phase: "buy", purchasedThisTurn: false });
+  }
+  return s;
+}
+
+function stop(state, data) {
+  if (state.phase !== "draw") reject("STOP", "phase");
+  var pid = state.currentPlayer;
+  var p = state.players[pid];
+  // R-17：主動 STOP 且未爆倉時加 STOP_BONUS（draw 階段不可能已爆倉，仍依規則判斷）。
+  var bonus = 0;
+  if (!p.busted) {
+    var cards = selectors.assetsWithEffect(state, pid, data, "STOP_BONUS");
+    for (var i = 0; i < cards.length; i++) bonus += cards[i].effect.param;
+  }
+  var s = addLog(state, "STOPPED", { pendingIncome: p.pendingIncome, bonus: bonus });
+  s = settleIncome(s, pid, p.pendingIncome + bonus);
+  return assign(s, { phase: "buy", purchasedThisTurn: false });
+}
+
+function buyAsset(state, action, data) {
+  if (state.phase !== "buy") reject("BUY_ASSET", "phase");
+  if (state.purchasedThisTurn) reject("BUY_ASSET", "alreadyPurchased");
+  var idx = state.market.indexOf(action.cardId);
+  if (idx < 0) reject("BUY_ASSET", "notInMarket");
+  var card = selectors.byId(data.assets.assets, action.cardId);
+  if (!card) reject("BUY_ASSET", "unknownCard");
+  var pid = state.currentPlayer;
+  var p = state.players[pid];
+  if (p.cash < card.cost) reject("BUY_ASSET", "insufficientCash");
+
+  // market 移除該卡但不立即補（下一位玩家回合開始才補）；tokensAdded 立即加入 bag 尾端。
+  var market = state.market.slice(0, idx).concat(state.market.slice(idx + 1));
+  var s = withPlayer(state, pid, {
+    cash: p.cash - card.cost,
+    assets: p.assets.concat([card.id]),
+    bag: p.bag.concat(card.tokensAdded)
+  });
+  s = assign(s, { market: market, purchasedThisTurn: true });
+  return addLog(s, "ASSET_BOUGHT", { cardId: card.id, cost: card.cost, tokensAdded: card.tokensAdded.slice() });
+}
+
+function buyInsurance(state, data) {
+  if (state.phase !== "buy") reject("BUY_INSURANCE", "phase");
+  if (state.purchasedThisTurn) reject("BUY_INSURANCE", "alreadyPurchased");
+  var pid = state.currentPlayer;
+  var p = state.players[pid];
+  if (p.cash < data.balance.insuranceCost) reject("BUY_INSURANCE", "insufficientCash");
+  var idx = p.bag.indexOf("blackSwan"); // 只看 bag，不看 drawn；移除索引最小者，無 RNG
+  if (idx < 0) reject("BUY_INSURANCE", "noBlackSwan");
+
+  var bag = p.bag.slice(0, idx).concat(p.bag.slice(idx + 1));
+  var s = withPlayer(state, pid, { cash: p.cash - data.balance.insuranceCost, bag: bag });
+  s = assign(s, { purchasedThisTurn: true });
+  return addLog(s, "INSURANCE_BOUGHT", {
+    cost: data.balance.insuranceCost,
+    bagBlackSwanAfter: selectors.bagBlackSwanCount(s, pid)
+  });
+}
+
+function endTurn(state, data) {
+  if (state.phase !== "buy") reject("END_TURN", "phase");
+  var pid = state.currentPlayer;
+  var p = state.players[pid];
+  // R-10：drawn 依順序附加到 bag 尾端；回合暫存欄位歸零。
+  var s = withPlayer(state, pid, {
+    bag: p.bag.concat(p.drawn),
+    drawn: [],
+    pendingIncome: 0,
+    blackSwanCount: 0,
+    luckyActive: false,
+    swanReturnUsed: false,
+    busted: false
+  });
+  s = assign(s, { purchasedThisTurn: false });
+  s = addLog(s, "TURN_ENDED", {});
+  if (pid === "human") {
+    s = assign(s, { currentPlayer: "ai", phase: "draw" });
+    return refillMarket(s, data);
+  }
+  s = assign(s, { phase: "roundEnd" });
+  return addLog(s, "ROUND_ENDED", { round: s.round, netWorth: netWorthSnapshot(s, data) });
+}
+
+function nextRound(state, data) {
+  if (state.phase !== "roundEnd") reject("NEXT_ROUND", "phase");
+  if (state.round === data.balance.rounds) {
+    // R-02：淨資產較高者勝；相同為 tie。
+    var nw = netWorthSnapshot(state, data);
+    var winner = nw.human > nw.ai ? "human" : (nw.ai > nw.human ? "ai" : "tie");
+    var s = assign(state, { phase: "gameOver", winner: winner });
+    return addLog(s, "GAME_OVER", { winner: winner, netWorth: nw });
+  }
+  var s2 = assign(state, { round: state.round + 1, currentPlayer: "human", phase: "draw" });
+  return refillMarket(s2, data);
+}
+
+function aiTurn(state, data) {
+  if (state.currentPlayer !== "ai") reject("AI_TURN", "notAiTurn");
+  if (state.phase !== "draw" && state.phase !== "buy") reject("AI_TURN", "phase");
+  var decision = ai.decideAi(state, data);
+  if (!decision) reject("AI_TURN", "noDecision");
+  var s = addLog(state, "AI_DECIDED", { decision: decision.action, reason: decision.reason });
+  return reduce(s, decision.action, data);
+}
+
+/* ---------- 對外介面 ---------- */
+
+function reduce(state, action, data) {
+  if (!action || typeof action.type !== "string") reject("UNKNOWN", "noType");
+  switch (action.type) {
+    case "START_GAME": return startGame(state, action, data);
+    case "DRAW": return draw(state, data);
+    case "STOP": return stop(state, data);
+    case "BUY_ASSET": return buyAsset(state, action, data);
+    case "BUY_INSURANCE": return buyInsurance(state, data);
+    case "END_TURN": return endTurn(state, data);
+    case "NEXT_ROUND": return nextRound(state, data);
+    case "AI_TURN": return aiTurn(state, data);
+    default: reject(action.type, "unknownAction");
+  }
+}
+
+/** UI 用：該 action 是否可套用。以 try/reduce 判斷，與 reduce 的拒絕條件必然一致。 */
+function canApply(state, action, data) {
+  try {
+    reduce(state, action, data);
+    return true;
+  } catch (e) {
+    if (e && typeof e.message === "string" && e.message.indexOf("REJECT:") === 0) return false;
+    throw e;
+  }
+}
+
+module.exports = {
+  initialState: initialState,
+  createInitialState: initialState,
+  reduce: reduce,
+  canApply: canApply,
+  SPEC_VERSION: SPEC_VERSION
+};
+
+});
+__define("engine/index.js", function (module, exports, require) {
+"use strict";
+/**
+ * engine 匯出總表（方便測試與 UI 一次取得）。
+ * 各檔皆為 CommonJS；build 依 ADR-001 §2.4 以迷你模組註冊器包進單一 HTML。
+ */
+var rng = require("./rng");
+var selectors = require("./selectors");
+var ai = require("./ai");
+var reducer = require("./reducer");
+
+module.exports = {
+  rng: rng,
+  selectors: selectors,
+  ai: ai,
+  reducer: reducer,
+  initialState: reducer.initialState,
+  createInitialState: reducer.createInitialState,
+  reduce: reducer.reduce,
+  canApply: reducer.canApply,
+  decideAi: ai.decideAi,
+  SPEC_VERSION: reducer.SPEC_VERSION
+};
+
+});
+__define("ui/app.js", function (module, exports, require) {
+"use strict";
+/**
+ * UI 層（規格 §8、ADR-001 §2.4）：只做「呈現 state、送出 action」。
+ * - 所有規則數字一律讀 state／selectors／GAME_DATA，不在 UI 算規則。
+ * - UI 自身狀態（目前畫面、抽屜開關、選取項、加速開關、動畫計數）只存在本模組變數，不寫進 engine state。
+ * - setTimeout 只用於 AI 回合的可視化節奏（balance.ui.aiStepDelayMs）；engine 無感。
+ * - engine 拋出的錯誤在 dispatch 攔截並顯示橫幅，頁面不會死掉。
+ */
+var reducer = require("../engine/reducer");
+var selectors = require("../engine/selectors");
+
+var data = null;   // GAME_DATA（build 注入）
+var root = null;   // <div id="app">
+var state = null;  // engine state
+var ui = {
+  screen: "title",      // title | jobSelect（phase==="lobby" 時由 UI 決定）
+  difficulty: "normal",
+  seedInput: "",
+  jobId: null,
+  marketOpen: false,
+  buySel: null,         // "card:<id>" | "insurance" | null
+  fast: false,
+  aiTimer: null,
+  error: null,
+  flyKey: ""            // 上次渲染的「玩家:已翻顆數」，用來只讓新籌碼做飛入動畫
+};
+
+/* ---------- 小工具 ---------- */
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
+  });
+}
+function money(n) { return (n < 0 ? "−$" : "$") + Math.abs(n); }
+function signed(n) { return (n < 0 ? "−$" : "＋$") + Math.abs(n); }
+function jobOf(pid) { return selectors.byId(data.jobs.jobs, state.players[pid].jobId); }
+function tokenOf(id) { return selectors.byId(data.tokens.tokens, id); }
+function cardOf(id) { return selectors.byId(data.assets.assets, id); }
+function can(action) { return reducer.canApply(state, action, data); }
+function isAiTurn() { return state.currentPlayer === "ai" && (state.phase === "draw" || state.phase === "buy"); }
+
+/** 依 tokens.json 順序輸出袋子摘要文字，例如「收入 5・黑天鵝 2」。 */
+function bagText(pid) {
+  var sum = selectors.bagSummary(state, pid);
+  var groups = {};
+  var order = [];
+  for (var i = 0; i < data.tokens.tokens.length; i++) {
+    var t = data.tokens.tokens[i];
+    var n = sum[t.id] || 0;
+    if (!n) continue;
+    var label = t.kind === "income" ? "收入" : t.name;
+    if (!groups[label]) { groups[label] = 0; order.push(label); }
+    groups[label] += n;
+  }
+  return order.map(function (k) { return k + " " + groups[k]; }).join("・") || "空";
+}
+
+/** 資產卡效果說明（讀 assets.json 的 effect 與 tokensAdded，不寫死數字）。 */
+function cardDesc(card) {
+  var parts = [];
+  if (card.tokensAdded && card.tokensAdded.length) {
+    var cnt = {};
+    var ord = [];
+    card.tokensAdded.forEach(function (id) { if (!cnt[id]) { cnt[id] = 0; ord.push(id); } cnt[id]++; });
+    parts.push("袋子加入 " + ord.map(function (id) {
+      var t = tokenOf(id);
+      var nm = t ? (t.kind === "income" ? "收入＋" + t.value : t.name) : id;
+      return nm + " ×" + cnt[id];
+    }).join("、"));
+  }
+  var e = card.effect || {};
+  if (e.type === "SWAN_RETURN_ONCE") parts.push("每回合第一顆黑天鵝放回袋子");
+  else if (e.type === "STOP_BONUS") parts.push("主動停手多拿 $" + e.param);
+  else if (e.type === "NTH_INCOME_DOUBLE") parts.push("本回合第 " + e.param + " 顆收入籌碼價值翻倍");
+  else if (e.type === "THRESHOLD_PLUS") parts.push("黑天鵝門檻 ＋" + e.param);
+  parts.push("面值 $" + card.value + " 計入淨資產");
+  return parts.join("；");
+}
+
+/** 已翻出籌碼 → chip HTML。黑天鵝事件名依規格 §6.3：第 n 顆取 eventNames[(n−1) % length]。 */
+function chipsHtml(pid, animateFrom) {
+  var drawn = state.players[pid].drawn;
+  if (!drawn.length) return '<span class="empty">還沒翻</span>';
+  var swanN = 0;
+  var out = "";
+  for (var i = 0; i < drawn.length; i++) {
+    var t = tokenOf(drawn[i]);
+    var cls = "chip", label = t ? t.name : drawn[i];
+    if (t && t.kind === "income") { cls += " in"; label = "＋" + t.value; }
+    else if (t && t.kind === "blackSwan") {
+      swanN++;
+      cls += " bs";
+      var names = t.eventNames || [];
+      label = names.length ? names[(swanN - 1) % names.length] : t.name;
+    }
+    else if (t && t.kind === "insurance") { cls += " ins"; label = "保險"; }
+    else if (t && t.kind === "lucky") { cls += " lk"; label = "幸運"; }
+    if (i >= animateFrom) cls += " fly";
+    out += '<span class="' + cls + '" style="animation-duration:' + data.balance.ui.tokenFlyMs + 'ms">' + esc(label) + "</span>";
+  }
+  return out;
+}
+
+/** 從 log 讀某玩家某回合的摘要（只讀尾端事件做播報，不算規則）。 */
+function turnSummary(pid, round) {
+  var s = { draws: 0, stopped: false, busted: false, income: null, cashBefore: null, cashAfter: null, bonus: 0, bought: null, insurance: false };
+  for (var i = 0; i < state.log.length; i++) {
+    var e = state.log[i];
+    if (e.player !== pid || e.round !== round) continue;
+    if (e.type === "TOKEN_DRAWN") s.draws++;
+    else if (e.type === "STOPPED") { s.stopped = true; s.bonus = e.bonus || 0; }
+    else if (e.type === "BUST") s.busted = true;
+    else if (e.type === "INCOME_SETTLED") { s.income = e.amount; s.cashAfter = e.cashAfter; s.cashBefore = e.cashAfter - e.amount; }
+    else if (e.type === "ASSET_BOUGHT") s.bought = e.cardId;
+    else if (e.type === "INSURANCE_BOUGHT") s.insurance = true;
+  }
+  return s;
+}
+
+/** AI 最近一次決策的中文播報（讀 log 尾端 AI_DECIDED）。 */
+function aiNarration() {
+  var last = null;
+  for (var i = state.log.length - 1; i >= 0; i--) {
+    if (state.log[i].type === "AI_DECIDED" && state.log[i].round === state.round) { last = state.log[i]; break; }
+    if (state.log[i].type === "TURN_ENDED" && state.log[i].player === "human" && state.log[i].round === state.round) break;
+  }
+  if (!last) return "AI 準備翻牌…";
+  var d = last.decision || {};
+  var r = last.reason;
+  if (d.type === "DRAW") return "AI 再翻一顆";
+  if (d.type === "STOP") {
+    if (r === "swanStop") return "AI 停手：黑天鵝逼近門檻";
+    if (r === "incomeStop") return "AI 停手：收入夠了";
+    if (r === "noCandidates") return "AI 停手：袋子翻完了";
+    return "AI 停手";
+  }
+  if (d.type === "BUY_ASSET") { var c = cardOf(d.cardId); return "AI 買下「" + (c ? c.name : d.cardId) + "」"; }
+  if (d.type === "BUY_INSURANCE") return "AI 買了保險";
+  if (d.type === "END_TURN") return "AI 結束回合";
+  return "AI 行動中";
+}
+
+/* ---------- 各畫面 ---------- */
+
+function errHtml() {
+  if (!ui.error) return "";
+  return '<div class="err"><span>' + esc(ui.error) + '</span><button type="button" data-act="dismissError">知道了</button></div>';
+}
+
+function renderTitle() {
+  var diffs = Object.keys(data.balance.ai);
+  var diffLabel = { easy: "簡單", normal: "普通", hard: "困難" };
+  return '<section class="scr"><div class="bar"><span class="t">見好就收</span><span class="s">夜市攤主・' + data.balance.rounds + ' 回合</span></div>' +
+    '<div class="full"><div class="body">' + errHtml() +
+    '<div class="title-hero"><h1>見好就收</h1><p>翻籌碼賺錢，黑天鵝翻到 ' + data.balance.blackSwanThreshold + ' 顆就爆倉。' + data.balance.rounds + ' 回合後淨資產高者勝。</p></div>' +
+    '<div class="card"><div class="h"><span>AI 難度</span></div><div class="seg">' +
+    diffs.map(function (d) {
+      return '<button type="button" data-act="difficulty" data-v="' + d + '" class="' + (ui.difficulty === d ? "on" : "") + '">' + esc(diffLabel[d] || d) + "</button>";
+    }).join("") + "</div></div>" +
+    '<div class="card"><div class="field"><label for="seedInput">牌局代碼（seed）</label>' +
+    '<input id="seedInput" inputmode="numeric" pattern="[0-9]*" placeholder="留空＝自動產生" value="' + esc(ui.seedInput) + '">' +
+    '<span class="hint">輸入同一組代碼可重玩同一局；結束畫面會顯示本局代碼。</span></div></div>' +
+    '</div><div class="dock"><button type="button" class="dk go" data-act="toJobSelect">開始</button></div></div></section>';
+}
+
+function renderJobSelect() {
+  var jobs = data.jobs.jobs;
+  var th = data.balance.blackSwanThreshold;
+  var icons = ["🍢", "🍗", "🧋"];
+  return '<section class="scr"><div class="bar"><span class="t">見好就收</span><span class="s">夜市攤主・' + data.balance.rounds + ' 回合</span></div>' +
+    '<div class="full"><div class="body">' + errHtml() +
+    '<div class="hero"><h1>選擇你的攤位</h1><p>職業決定起始現金與袋子裡的籌碼。</p></div><div class="jobs">' +
+    jobs.map(function (j, idx) {
+      var total = 0, dots = "";
+      data.tokens.tokens.forEach(function (t) {
+        var n = j.startBag[t.id] || 0;
+        total += n;
+        var cls = t.kind === "blackSwan" ? "b" : (t.id === "income_m" ? "m" : (t.id === "income_l" ? "l" : ""));
+        for (var k = 0; k < n; k++) dots += "<i" + (cls ? ' class="' + cls + '"' : "") + "></i>";
+      });
+      return '<button type="button" class="job ' + (ui.jobId === j.id ? "sel" : "") + '" data-act="job" data-v="' + j.id + '">' +
+        '<div class="ic">' + icons[idx % icons.length] + '</div><div><div class="nm">' + esc(j.name) + " <small>" + esc(j.style) + "</small></div>" +
+        '<div class="meta">起始 $' + j.startCash + "・門檻 " + th + "・袋子 " + total + " 顆</div>" +
+        '<div class="fl">' + esc(j.flavor || "") + '</div><div class="dots">' + dots + '</div></div><div class="chk"></div></button>';
+    }).join("") + "</div></div>" +
+    '<div class="dock"><button type="button" class="dk ghost" data-act="toTitle">返回</button>' +
+    '<button type="button" class="dk go" data-act="start" ' + (ui.jobId ? "" : "disabled") + ">開始這一季</button></div></div></section>";
+}
+
+function marketItems(interactive) {
+  var p = state.players[state.currentPlayer];
+  var html = "";
+  state.market.forEach(function (id) {
+    var c = cardOf(id);
+    if (!c) return;
+    var ok = interactive ? can({ type: "BUY_ASSET", cardId: id }) : p.cash >= c.cost;
+    var sel = ui.buySel === "card:" + id;
+    var cls = "item" + (ok ? "" : " dim") + (sel ? " sel" : "");
+    var inner = '<div class="ic">🏪</div><div class="tx"><div class="n">' + esc(c.name) + '</div><div class="d">' + esc(cardDesc(c)) + '</div></div><div class="p">$' + c.cost + "</div>";
+    html += interactive
+      ? '<button type="button" class="' + cls + '" data-act="pick" data-v="card:' + id + '" ' + (ok ? "" : "disabled") + ">" + inner + '<div class="rad"></div></button>'
+      : '<div class="' + cls + '">' + inner + "</div>";
+  });
+  var insOk = interactive ? can({ type: "BUY_INSURANCE" }) : p.cash >= data.balance.insuranceCost;
+  var insSel = ui.buySel === "insurance";
+  var insInner = '<div class="ic ins">🛡️</div><div class="tx"><div class="n">保險</div><div class="d">從袋子永久移除 1 顆黑天鵝（袋中剩 ' + selectors.bagBlackSwanCount(state, state.currentPlayer) + " 顆）</div></div>" +
+    '<div class="p">$' + data.balance.insuranceCost + "</div>";
+  html += interactive
+    ? '<button type="button" class="item' + (insOk ? "" : " dim") + (insSel ? " sel" : "") + '" data-act="pick" data-v="insurance" ' + (insOk ? "" : "disabled") + ">" + insInner + '<div class="rad"></div></button>'
+    : '<div class="item' + (insOk ? "" : " dim") + '">' + insInner + "</div>";
+  if (!state.market.length) html += '<div class="mrow">市場已空</div>';
+  return html;
+}
+
+function statusCard(pid, animateFrom) {
+  var p = state.players[pid];
+  var th = selectors.threshold(state, pid, data);
+  var meter = "";
+  for (var i = 0; i < th; i++) meter += "<i class=\"" + (i < p.blackSwanCount ? "f" : "") + (i === th - 1 ? " last" : "") + "\"></i>";
+  var left = th - p.blackSwanCount;
+  var bagSwans = selectors.bagBlackSwanCount(state, pid);
+  var who = pid === "human" ? "" : "AI ";
+  var hint = p.busted ? "已爆倉：收入減半入帳" : ("再翻 " + left + " 顆黑天鵝就爆倉");
+  var lucky = p.luckyActive ? "・幸運生效：下一顆不會是黑天鵝" : "";
+  return '<div class="card"><div class="h"><span>' + who + "暫存收入（本回合）</span><span>袋子剩 <b>" + p.bag.length + "</b> 顆（" + esc(bagText(pid)) + "）</span></div>" +
+    '<div class="kv"><div class="big">' + money(p.pendingIncome) + '</div><div class="side">黑天鵝<br><b>' + p.blackSwanCount + " / " + th + "</b></div></div>" +
+    '<div class="meter">' + meter + '</div><div class="mrow"><span>' + esc(hint) + esc(lucky) + "</span><b>爆倉：收入減半（袋中黑天鵝 " + bagSwans + " 顆）</b></div></div>" +
+    '<div class="card"><div class="h"><span>' + who + "已翻出</span><span><b>" + p.drawn.length + "</b> 顆</span></div><div class=\"chips\">" + chipsHtml(pid, animateFrom) + "</div></div>";
+}
+
+function playerCard(pid, statusText) {
+  var p = state.players[pid];
+  var job = jobOf(pid);
+  var isMe = pid === "human";
+  return '<div class="card"><div class="ai"><div class="av' + (isMe ? " me" : "") + '">' + (isMe ? "你" : "AI") + '</div><div><div class="nm">' +
+    (isMe ? "你" : "AI 對手") + "（" + esc(job ? job.name : "") + ")</div><div class=\"st\">" + esc(statusText) + "</div></div>" +
+    '<div class="num">現金 ' + money(p.cash) + "<b>淨資產 " + money(selectors.netWorth(state, pid, data)) + "</b></div></div></div>";
+}
+
+function assetsCard(pid) {
+  var cards = selectors.ownedAssets(state, pid, data);
+  var who = pid === "human" ? "你的資產" : "AI 的資產";
+  return '<div class="card"><div class="h"><span>' + who + "</span><span><b>" + cards.length + "</b> 張</span></div><div class=\"assets\">" +
+    (cards.length ? cards.map(function (c) { return "<span>" + esc(c.name) + " $" + c.value + "</span>"; }).join("") : '<span class="empty">尚無</span>') + "</div></div>";
+}
+
+function lastTurnText(pid) {
+  var round = pid === "ai" ? state.round - 1 : state.round;
+  if (round < 1) return "尚未行動";
+  var s = turnSummary(pid, round);
+  if (s.income === null) return "尚未行動";
+  return "上回合翻 " + s.draws + " 顆・" + (s.busted ? "爆倉" : "停手") + "・入帳 " + signed(s.income);
+}
+
+function renderPlayDraw() {
+  var round = state.round, job = jobOf("human");
+  var animateFrom = ui.flyKey === "human:" + (state.players.human.drawn.length - 1) ? state.players.human.drawn.length - 1 : state.players.human.drawn.length;
+  ui.flyKey = "human:" + state.players.human.drawn.length;
+  return '<section class="scr' + (ui.marketOpen ? " mkopen" : "") + '"><div class="bar"><div><div class="t">第 ' + round + " / " + data.balance.rounds + ' 回合</div><div class="s">你的回合・' + esc(job.name) + "</div></div>" +
+    '<span class="pill">現金 ' + money(state.players.human.cash) + "</span></div>" +
+    '<div class="col"><div class="body">' + errHtml() + statusCard("human", animateFrom) + playerCard("ai", lastTurnText("ai")) + assetsCard("human") + "</div>" +
+    '<div class="dock"><button type="button" class="dk draw" data-act="draw" ' + (can({ type: "DRAW" }) ? "" : "disabled") + ">再翻</button>" +
+    '<button type="button" class="dk stop" data-act="stop" ' + (can({ type: "STOP" }) ? "" : "disabled") + ">停手</button>" +
+    '<button type="button" class="dk mk" data-act="openMarket">🏪 市場<span class="cnt">' + state.market.length + "</span></button></div></div>" +
+    '<div class="scrim" data-act="closeMarket"></div><div class="sheet"><div class="grab"></div><div class="h"><b>市場・先買先得</b><button type="button" data-act="closeMarket">關閉</button></div>' +
+    marketItems(false) + '<div class="mrow" style="margin-top:10px">停手後才能購買，每回合 0–' + data.balance.purchasesPerTurn + " 張</div></div></section>";
+}
+
+function renderPlayBuy() {
+  var round = state.round, job = jobOf("human");
+  var s = turnSummary("human", round);
+  var th = selectors.threshold(state, "human", data);
+  var p = state.players.human;
+  var boughtCard = s.bought ? cardOf(s.bought) : null;
+  var buyBtn;
+  if (state.purchasedThisTurn) {
+    buyBtn = '<button type="button" class="dk go" data-act="endTurn">結束回合</button>';
+  } else {
+    var label = "買入";
+    if (ui.buySel === "insurance") label = "買保險 $" + data.balance.insuranceCost;
+    else if (ui.buySel && ui.buySel.indexOf("card:") === 0) { var c = cardOf(ui.buySel.slice(5)); if (c) label = "買入 $" + c.cost; }
+    buyBtn = '<button type="button" class="dk ghost" data-act="endTurn">不買</button>' +
+      '<button type="button" class="dk go" data-act="buy" ' + (ui.buySel ? "" : "disabled") + ">" + esc(label) + "</button>";
+  }
+  return '<section class="scr"><div class="bar"><div><div class="t">' + (p.busted ? "爆倉結算" : "回合結算") + '</div><div class="s">第 ' + round + " / " + data.balance.rounds + " 回合・" + esc(job.name) + "</div></div>" +
+    '<span class="pill">現金 ' + money(p.cash) + "</span></div>" +
+    '<div class="full"><div class="body">' + errHtml() +
+    '<div class="sum"><div class="h">本回合入帳</div><div class="big">' + signed(s.income || 0) + '</div><div class="rows">' +
+    "<span>" + (p.busted ? "爆倉於" : "停手於") + "<b>第 " + s.draws + " 顆</b></span><span>黑天鵝<b>" + p.blackSwanCount + " / " + th + "</b></span>" +
+    "<span>爆倉減半<b>" + (p.busted ? "有" : "無") + "</b></span>" + (s.bonus ? "<span>停手加成<b>＋$" + s.bonus + "</b></span>" : "") +
+    "<span>現金<b>" + money(s.cashBefore === null ? p.cash : s.cashBefore) + " → " + money(s.cashAfter === null ? p.cash : s.cashAfter) + "</b></span></div></div>" +
+    '<div class="card list"><div class="h" style="margin:8px 0 2px"><span>' +
+    (state.purchasedThisTurn ? ("已買下：" + esc(boughtCard ? boughtCard.name : (s.insurance ? "保險" : ""))) : ("用 " + money(p.cash) + " 買 0–" + data.balance.purchasesPerTurn + " 張，或一份保險")) +
+    "</span></div>" + (state.purchasedThisTurn ? '<div class="mrow" style="margin:8px 0">本回合購買次數已用完。</div>' : marketItems(true)) + "</div>" +
+    assetsCard("human") + '</div><div class="dock">' + buyBtn + "</div></div></section>";
+}
+
+function renderPlayAi() {
+  var round = state.round, job = jobOf("ai");
+  var animateFrom = ui.flyKey === "ai:" + (state.players.ai.drawn.length - 1) ? state.players.ai.drawn.length - 1 : state.players.ai.drawn.length;
+  ui.flyKey = "ai:" + state.players.ai.drawn.length;
+  var narr = aiNarration();
+  var lastBought = turnSummary("ai", round);
+  var boughtText = lastBought.bought ? ("本回合買下：" + (cardOf(lastBought.bought) || {}).name) : (lastBought.insurance ? "本回合買了保險" : "");
+  return '<section class="scr"><div class="bar"><div><div class="t">第 ' + round + " / " + data.balance.rounds + ' 回合</div><div class="s">AI 的回合・' + esc(job.name) + "</div></div>" +
+    '<span class="pill ai">AI 現金 ' + money(state.players.ai.cash) + "</span></div>" +
+    '<div class="col"><div class="body">' + errHtml() + statusCard("ai", animateFrom) +
+    '<div class="card"><div class="note ai">' + esc(narr) + (boughtText ? "<br>" + esc(boughtText) : "") + "</div></div>" +
+    playerCard("human", "等 AI 翻完就輪到你") + "</div>" +
+    '<div class="dock"><button type="button" class="dk wait" disabled>' + esc(narr) + "</button>" +
+    '<button type="button" class="dk fast' + (ui.fast ? " on" : "") + '" data-act="toggleFast">' + (ui.fast ? "加速中" : "加速") + "</button></div></div>" +
+    '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="h"><b>市場</b></div>' + marketItems(false) + "</div></section>";
+}
+
+function renderRoundEnd() {
+  var round = state.round;
+  var last = state.round === data.balance.rounds;
+  var nwH = selectors.netWorth(state, "human", data), nwA = selectors.netWorth(state, "ai", data);
+  var sh = turnSummary("human", round), sa = turnSummary("ai", round);
+  var diff = nwH - nwA;
+  return '<section class="scr"><div class="bar"><div><div class="t">第 ' + round + " 回合結束</div><div class=\"s\">" + (last ? "最後一回合" : "還有 " + (data.balance.rounds - round) + " 回合") + "</div></div>" +
+    '<span class="pill lite">seed ' + state.seed + "</span></div>" +
+    '<div class="full"><div class="body">' + errHtml() +
+    '<div class="sum"><div class="h">你的淨資產</div><div class="big">' + money(nwH) + '</div><div class="rows">' +
+    "<span>AI 淨資產<b>" + money(nwA) + "</b></span><span>" + (diff >= 0 ? "領先" : "落後") + "<b>" + money(Math.abs(diff)) + "</b></span>" +
+    "<span>你本回合入帳<b>" + signed(sh.income || 0) + (sh.busted ? "（爆倉）" : "") + "</b></span><span>AI 本回合入帳<b>" + signed(sa.income || 0) + (sa.busted ? "（爆倉）" : "") + "</b></span></div></div>" +
+    playerCard("human", "翻 " + sh.draws + " 顆・" + (sh.busted ? "爆倉" : "停手") + (sh.bought ? "・買下" + (cardOf(sh.bought) || {}).name : (sh.insurance ? "・買保險" : ""))) +
+    playerCard("ai", "翻 " + sa.draws + " 顆・" + (sa.busted ? "爆倉" : "停手") + (sa.bought ? "・買下" + (cardOf(sa.bought) || {}).name : (sa.insurance ? "・買保險" : ""))) +
+    assetsCard("human") + assetsCard("ai") +
+    '</div><div class="dock"><button type="button" class="dk go" data-act="nextRound">' + (last ? "看結果" : "下一回合") + "</button></div></div></section>";
+}
+
+function renderGameOver() {
+  var nwH = selectors.netWorth(state, "human", data), nwA = selectors.netWorth(state, "ai", data);
+  var w = state.winner;
+  var title = w === "human" ? "你贏了" : (w === "ai" ? "AI 贏了" : "平手");
+  var cls = w === "human" ? "win" : (w === "ai" ? "lose" : "");
+  return '<section class="scr"><div class="bar"><div><div class="t">本局結束</div><div class="s">' + data.balance.rounds + " 回合・難度 " + esc(state.difficulty) + "</div></div></div>" +
+    '<div class="full"><div class="body">' + errHtml() +
+    '<div class="sum ' + cls + '"><div class="h">結果</div><div class="big">' + title + '</div><div class="rows"><span>你的淨資產<b>' + money(nwH) + "</b></span><span>AI 淨資產<b>" + money(nwA) + "</b></span>" +
+    "<span>差距<b>" + money(Math.abs(nwH - nwA)) + "</b></span></div></div>" +
+    '<div class="card"><div class="h"><span>本局牌局代碼（seed）</span></div><div class="seedrow"><code id="seedText">' + state.seed + '</code><button type="button" data-act="copySeed">複製</button></div>' +
+    '<div class="mrow" style="margin-top:8px"><span>' + esc(ui.copyMsg || "回報問題時附上這組代碼，就能重現同一局。") + "</span></div></div>" +
+    playerCard("human", "現金 " + money(state.players.human.cash)) + playerCard("ai", "現金 " + money(state.players.ai.cash)) +
+    assetsCard("human") + assetsCard("ai") +
+    '</div><div class="dock"><button type="button" class="dk go" data-act="restart">再來一局</button></div></div></section>';
+}
+
+/* ---------- 主渲染與事件 ---------- */
+
+function render() {
+  var html;
+  if (state.phase === "lobby") html = ui.screen === "jobSelect" ? renderJobSelect() : renderTitle();
+  else if (state.phase === "roundEnd") html = renderRoundEnd();
+  else if (state.phase === "gameOver") html = renderGameOver();
+  else if (state.currentPlayer === "ai") html = renderPlayAi();
+  else if (state.phase === "buy") html = renderPlayBuy();
+  else html = renderPlayDraw();
+  root.innerHTML = html;
+  root.setAttribute("data-phase", state.phase);
+  root.setAttribute("data-screen", screenName());
+  scheduleAi();
+}
+
+function screenName() {
+  if (state.phase === "lobby") return ui.screen;
+  if (state.phase === "roundEnd") return "roundEnd";
+  if (state.phase === "gameOver") return "gameOver";
+  if (state.currentPlayer === "ai") return "aiTurn";
+  return state.phase === "buy" ? "humanBuy" : "humanTurn";
+}
+
+/** 送 action 給 engine；engine 拒絕或例外時只顯示橫幅，不讓頁面死掉。 */
+function dispatch(action) {
+  try {
+    state = reducer.reduce(state, action, data);
+    ui.error = null;
+  } catch (e) {
+    ui.error = "動作未被接受：" + (e && e.message ? e.message : String(e));
+  }
+  render();
+}
+
+/** AI 回合節奏：每步 ≥ aiStepDelayMs（加速時縮短，仍只在 UI 層）。 */
+function scheduleAi() {
+  if (ui.aiTimer) { clearTimeout(ui.aiTimer); ui.aiTimer = null; }
+  if (!isAiTurn() || ui.error) return;
+  var delay = data.balance.ui.aiStepDelayMs;
+  if (ui.fast) delay = Math.floor(delay / 4);
+  ui.aiTimer = setTimeout(function () {
+    ui.aiTimer = null;
+    if (isAiTurn()) dispatch({ type: "AI_TURN" });
+  }, delay);
+}
+
+function parseSeed(text) {
+  var t = String(text || "").trim();
+  if (!/^\d{1,10}$/.test(t)) return null;
+  var n = Number(t);
+  if (n > 4294967295) return null;
+  return n >>> 0;
+}
+
+function copySeed() {
+  var text = String(state.seed);
+  var done = function () { ui.copyMsg = "已複製 " + text; render(); };
+  var fail = function () { ui.copyMsg = "無法自動複製，請手動長按選取代碼。"; render(); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fail);
+      return;
+    }
+  } catch (e) { /* 走備援 */ }
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "absolute";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand && document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (ok) done(); else fail();
+  } catch (e2) { fail(); }
+}
+
+function onClick(ev) {
+  var el = ev.target;
+  while (el && el !== root && !(el.getAttribute && el.getAttribute("data-act"))) el = el.parentNode;
+  if (!el || el === root) return;
+  if (el.disabled) return;
+  var act = el.getAttribute("data-act"), v = el.getAttribute("data-v");
+  switch (act) {
+    case "difficulty": ui.difficulty = v; render(); break;
+    case "toJobSelect": ui.screen = "jobSelect"; render(); break;
+    case "toTitle": ui.screen = "title"; render(); break;
+    case "job": ui.jobId = v; render(); break;
+    case "start": {
+      var seed = parseSeed(ui.seedInput);
+      if (seed === null) seed = Date.now() >>> 0; // 只在 UI 層產生 seed（規格 §8.1）
+      ui.buySel = null; ui.marketOpen = false; ui.copyMsg = ""; ui.flyKey = "";
+      dispatch({ type: "START_GAME", seed: seed, jobId: ui.jobId, difficulty: ui.difficulty });
+      break;
+    }
+    case "draw": dispatch({ type: "DRAW" }); break;
+    case "stop": ui.buySel = null; ui.marketOpen = false; dispatch({ type: "STOP" }); break;
+    case "openMarket": ui.marketOpen = true; render(); break;
+    case "closeMarket": ui.marketOpen = false; render(); break;
+    case "pick": ui.buySel = (ui.buySel === v) ? null : v; render(); break;
+    case "buy": {
+      if (!ui.buySel) return;
+      var action = ui.buySel === "insurance" ? { type: "BUY_INSURANCE" } : { type: "BUY_ASSET", cardId: ui.buySel.slice(5) };
+      ui.buySel = null;
+      dispatch(action);
+      break;
+    }
+    case "endTurn": ui.buySel = null; ui.flyKey = ""; dispatch({ type: "END_TURN" }); break;
+    case "toggleFast": ui.fast = !ui.fast; render(); break;
+    case "nextRound": ui.flyKey = ""; dispatch({ type: "NEXT_ROUND" }); break;
+    case "copySeed": copySeed(); break;
+    case "restart":
+      if (ui.aiTimer) { clearTimeout(ui.aiTimer); ui.aiTimer = null; }
+      state = reducer.initialState();
+      ui.screen = "title"; ui.error = null; ui.buySel = null; ui.copyMsg = ""; ui.flyKey = "";
+      render();
+      break;
+    case "dismissError": ui.error = null; render(); break;
+    default: break;
+  }
+}
+
+function onInput(ev) {
+  if (ev.target && ev.target.id === "seedInput") ui.seedInput = ev.target.value;
+}
+
+function boot() {
+  data = window.GAME_DATA;
+  root = document.getElementById("app");
+  if (!data || !root) {
+    if (root) root.textContent = "載入失敗：找不到遊戲資料（GAME_DATA）。";
+    return;
+  }
+  state = reducer.initialState();
+  root.addEventListener("click", onClick);
+  root.addEventListener("input", onInput);
+  window.addEventListener("error", function (e) {
+    ui.error = "頁面錯誤：" + (e && e.message ? e.message : "未知");
+    try { render(); } catch (e2) { /* 已盡力 */ }
+  });
+  render();
+  // 供煙霧測試讀取畫面狀態（唯讀）。
+  window.__game = { getState: function () { return state; }, getScreen: screenName };
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+
+module.exports = { boot: boot };
+
+});
+__require("ui/app.js");
+})();
+</script>
+</body>
+</html>

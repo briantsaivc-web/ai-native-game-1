@@ -488,8 +488,8 @@ tests/ui/smoke.spec.js   Playwright
 ---
 
 ## 附錄 A：需製作人決定的事（不影響 G3.5 UI 決策，可延後）
-1. AI 的職業卡：目前固定 `j02` 雞排攤（`aiDefaultJobId`）。替代方案：由 seed 隨機三選一（多消耗 1 次 RNG）。建議固定，讓玩家好比較。
-2. 第 12 回合結束後是否顯示「本局 seed」讓製作人回報 bug 時可重放：建議顯示（已寫入 8.1 gameOver 讀取欄位），若不想露技術資訊請告知。
+1. AI 的職業卡：**製作人拍板（2026-09-13）：由 seed 隨機三選一**。`START_GAME` 若未帶 `aiJobId`，以 rng 從 jobs.json 隨機取一張（消耗 1 次 RNG，順序在 Fisher–Yates 洗牌之前）；`aiDefaultJobId` 僅作測試用預設。
+2. gameOver 顯示本局 seed：**製作人拍板（2026-09-13）：顯示**，並附「複製 seed」按鈕（UI 層）。
 
 ## 附錄 B：與 outline 的差異（供 story-editor 核對）
 - 新增 `NEXT_ROUND` action 與 `roundEnd` 畫面（outline 步驟表無此停點）。

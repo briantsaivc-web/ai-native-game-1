@@ -2,3 +2,5 @@ node_modules/
 *.backup.*
 scratch/
 .DS_Store
+test-results/
+playwright-report/

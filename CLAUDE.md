@@ -51,11 +51,13 @@ docs/changelog/   CHANGELOG.md
 
 ## 4. 指令
 
-【UNKNOWN：`package.json` 尚未建立。G4 製作階段由 game-engineer 建立後，release-manager 回填本節。回填前所有角色遇到需要跑指令的步驟一律回報 UNKNOWN，不得猜。】
+（2026-09-13 由 game-engineer 於 T-001 S5 回填；依據 `package.json` scripts。全部只需 Node ≥ 18，`test:ui` 另需 `playwright` 套件與 Chromium。）
 
-- 建置：UNKNOWN
-- 測試：UNKNOWN
-- 本機預覽：UNKNOWN
+- 建置：`npm run build`（執行 `node build/bundle.js`，把 `src/` 打包成根目錄 `index.html`；決定性、零外部資源、< 300 KB）
+- 測試：`npm test`（＝ `npm run test:engine && npm run build && npm run test:ui`）
+  - `npm run test:engine`：`node --test "tests/engine/**/*.test.js"`（純 Node，零套件；含 `T-BUILD-*`）
+  - `npm run test:ui`：`node tests/ui/smoke.spec.js`（Playwright Chromium，手機直向 390×844 與 iPad 橫向 1194×834 各走完一局，截圖到 `docs/qa/shots/`；找不到 `playwright` 或瀏覽器時印出可讀錯誤並以非 0 結束。安裝：`npm i -D playwright`，瀏覽器位置由 `PLAYWRIGHT_BROWSERS_PATH` 指定或 `npx playwright install chromium`）
+- 本機預覽：`npm run build` 後直接用瀏覽器開 `index.html`（支援 `file://`，斷網可玩）；或 `npm run preview` 起 `http://localhost:8080`（Node 內建 http，給 iPad／手機同網段測試用）
 
 ## 5. 所有角色共同的工作紀律
 
