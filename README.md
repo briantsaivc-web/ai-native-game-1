@@ -13,8 +13,8 @@
 | 路徑 | 說明 |
 |---|---|
 | `CLAUDE.md` | 專案憲法：架構原則、工作紀律、角色權限、Gate 流程。所有 AI 角色的最高規範。 |
-| `.claude/agents/` | 9 個角色檔：market-researcher、story-editor、systems-engineer、ui-designer、game-engineer、qa-tester、code-reviewer、release-manager、course-recorder |
-| `.claude/skills/` | 6 個流程技能，對應 Gate：`/research`（G1）、`/plan-story`（G2）、`/spec`（G3＋G3.5）、`/build`（G4）、`/qa-gate`（G5）、`/release`（G6） |
+| `.claude/agents/` | 10 個角色檔：market-researcher、story-editor、systems-engineer、ui-designer、game-engineer、review-packager、qa-tester、code-reviewer、release-manager、course-recorder |
+| `.claude/skills/` | 7 個流程技能，對應 Gate：`/research`（G1）、`/plan-story`（G2）、`/spec`（G3＋G3.5）、`/build`（G4）、`/cross-review`（G4.5）、`/qa-gate`（G5）、`/release`（G6） |
 | `.claude/hooks/` | `block-push.sh`（擋 AI 自行 push）、`check-forbidden.sh`（擋 engine 層的 Math.random／Date／DOM） |
 | `docs/templates/` | 任務單、ADR、回報、UI 三版對照表範本 |
 | `docs/` 其餘 | 各 Gate 產物（research、design、spec、ui、tickets、qa、reports、changelog） |

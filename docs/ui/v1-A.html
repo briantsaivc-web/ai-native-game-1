@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>見好就收 UI v1-A 極簡文字卡</title>
+<style>
+/* ===== 預覽外殼（不屬於遊戲本體） ===== */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#e9e9e6;font-family:"PingFang TC","Noto Sans CJK TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",sans-serif;color:#111}
+.tb{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 12px;background:#2b2b2b;color:#eee;font-size:13px}
+.tb b{font-size:14px;margin-right:4px}
+.tb .grp{display:flex;align-items:center;gap:6px}
+.tb button{min-width:44px;min-height:44px;padding:0 12px;border:1px solid #666;background:#3a3a3a;color:#eee;border-radius:8px;font-size:13px;font-family:inherit}
+.tb button.on{background:#f5f5f5;color:#111;border-color:#f5f5f5;font-weight:700}
+.stage{position:relative;overflow:hidden;display:flex;justify-content:center;align-items:flex-start;padding:12px}
+.wrap{position:relative}
+.device{position:absolute;top:0;left:0;transform-origin:top left;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.25);border-radius:22px;overflow:hidden}
+.device.phone{width:390px;height:844px}
+.device.ipad{width:1180px;height:820px;border-radius:18px}
+body.bare .tb{display:none}
+body.bare{background:#fff}
+body.bare .stage{padding:0}
+body.bare .device{box-shadow:none;border-radius:0}
+
+/* ===== 遊戲本體（A：極簡文字卡） ===== */
+.app{width:100%;height:100%;overflow:auto;background:#fff;color:#111;display:flex;flex-direction:column}
+.scr{display:flex;flex:1;flex-direction:column;padding:20px}
+.scr:not(.on){display:none!important}
+.hd{display:flex;justify-content:space-between;align-items:baseline;font-size:16px;color:#555;border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:14px}
+.hd strong{color:#111;font-size:18px}
+h1{font-size:28px;margin:0 0 6px;font-weight:700}
+.sub{color:#666;font-size:15px;margin:0 0 18px}
+.btn{min-width:44px;min-height:44px;font-family:inherit;font-size:18px;border:2px solid #111;background:#fff;color:#111;border-radius:12px;padding:0 18px;cursor:pointer}
+.btn:active{background:#eee}
+.btn.solid{background:#111;color:#fff}
+.btn.solid:active{background:#333}
+.btn.big{min-height:96px;font-size:34px;font-weight:700;border-radius:18px;flex:1}
+.btn[disabled]{opacity:.35}
+
+/* 職業卡 */
+.jobs{display:flex;flex-direction:column;gap:14px}
+.job{border:2px solid #111;border-radius:14px;padding:18px;text-align:left;background:#fff;cursor:pointer;min-height:44px;font-family:inherit;color:#111}
+.job.sel{background:#111;color:#fff}
+.job .nm{font-size:24px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between}
+.job .nm small{font-size:14px;font-weight:400;opacity:.7}
+.job .row{font-size:15px;line-height:1.7;display:flex;justify-content:space-between}
+.job .toks{margin-top:8px}
+.tok{display:inline-block;min-width:36px;height:36px;line-height:32px;padding:0 8px;border:2px solid #111;border-radius:8px;font-size:15px;font-weight:700;text-align:center;margin:0 6px 6px 0;vertical-align:middle;background:#fff;color:#111}
+.tok.in{background:#111;color:#fff}
+.tok.bs{background:#fff;color:#c1121f;border-color:#c1121f}
+.tok.small{min-width:28px;height:28px;line-height:24px;font-size:13px;padding:0 6px}
+.job.sel .tok.in{background:#fff;color:#111;border-color:#fff}
+.job.sel .tok.bs{background:#111;color:#ff7b7b;border-color:#ff7b7b}
+.foot{margin-top:auto;padding-top:16px;display:flex;gap:12px}
+
+/* 遊玩中 */
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:16px}
+.stat .k{font-size:14px;color:#666}
+.stat .v{font-size:36px;font-weight:700;line-height:1.1;letter-spacing:-.5px}
+.stat .v small{font-size:16px;font-weight:400;color:#666}
+.bsq{display:inline-flex;gap:4px;vertical-align:middle;margin-left:8px}
+.bsq i{width:14px;height:14px;border:2px solid #c1121f;border-radius:3px;display:block}
+.bsq i.f{background:#c1121f}
+.sec{margin:6px 0 14px}
+.sec .k{font-size:14px;color:#666;margin-bottom:6px;display:flex;justify-content:space-between}
+.track{min-height:44px;border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:8px 0 2px;display:flex;flex-wrap:wrap;align-items:center}
+.track .ph{color:#aaa;font-size:14px}
+.acts{display:flex;gap:14px;margin:6px 0 18px}
+.mk{border-top:1px solid #ddd}
+.mrow{display:flex;justify-content:space-between;align-items:center;min-height:56px;border-bottom:1px solid #eee;padding:8px 0;gap:10px}
+.mrow .n{font-size:18px;font-weight:700}
+.mrow .d{font-size:13px;color:#666}
+.mrow .p{font-size:20px;font-weight:700;white-space:nowrap}
+.mrow.dim{color:#999}
+.mrow.dim .n,.mrow.dim .p{color:#999}
+.ai{margin-top:auto;padding-top:12px;border-top:2px solid #111;font-size:14px;color:#333;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 14px}
+.ai b{font-size:15px}
+
+/* 結算 */
+.settle .big{font-size:56px;font-weight:700;letter-spacing:-1px;line-height:1;margin:6px 0 4px}
+.settle .eq{font-size:16px;color:#555;margin-bottom:18px}
+.buy{display:flex;flex-direction:column;gap:10px}
+.buy button{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:64px;text-align:left;border:2px solid #111;border-radius:12px;background:#fff;padding:10px 14px;font-family:inherit;color:#111;cursor:pointer}
+.buy button .n{font-size:18px;font-weight:700}
+.buy button .d{font-size:13px;color:#666;margin-top:2px}
+.buy button .p{font-size:20px;font-weight:700;white-space:nowrap}
+.buy button.sel{background:#111;color:#fff}
+.buy button.sel .d{color:#ccc}
+.buy button.dim{border-color:#bbb;color:#999}
+.buy button.dim .d,.buy button.dim .p{color:#aaa}
+.buy button.ins{border-style:dashed}
+
+/* 手機直向：職業卡緊湊，讓「開始」不落到摺線下 */
+.phone .jobs{gap:10px}
+.phone .job{padding:12px 16px}
+.phone .job .nm{font-size:20px;margin-bottom:2px}
+.phone .job .row{line-height:1.5}
+.phone .tok.small{min-width:26px;height:26px;line-height:22px;font-size:12px;margin:0 4px 4px 0}
+
+/* ===== iPad 橫向：左右兩欄 ===== */
+.ipad .scr{padding:24px 32px}
+.ipad .jobs{flex-direction:row}
+.ipad .job{flex:1}
+.ipad .play{display:grid;grid-template-columns:1.15fr 1fr;grid-template-rows:auto 1fr auto;column-gap:40px}
+.ipad .play .hd{grid-column:1/3}
+.ipad .play .L{grid-row:2;display:flex;flex-direction:column}
+.ipad .play .R{grid-row:2;display:flex;flex-direction:column}
+.ipad .play .ai{grid-column:1/3;grid-row:3}
+.ipad .stat .v{font-size:44px}
+.ipad .btn.big{min-height:120px;font-size:40px}
+.ipad .acts{margin-top:28px}
+.ipad .settle .body{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+.ipad .settle .big{font-size:72px}
+</style>
+</head>
+<body>
+<header class="tb">
+  <b>v1-A 極簡文字卡</b>
+  <div class="grp">裝置預覽：<button data-dev="phone" class="on">手機直向 390×844</button><button data-dev="ipad">iPad 橫向 1180×820</button></div>
+  <div class="grp">畫面：<button data-scr="1" class="on">1 職業選擇</button><button data-scr="2">2 遊玩中</button><button data-scr="3">3 回合結算</button></div>
+</header>
+<main class="stage" id="stage">
+<div class="wrap" id="wrap">
+<div class="device phone" id="device">
+<div class="app">
+
+<!-- 畫面 1：職業選擇 -->
+<section class="scr on" data-scr="1">
+  <div class="hd"><span>見好就收</span><strong>選擇你的攤位</strong></div>
+  <h1>你要開哪一攤？</h1>
+  <p class="sub">職業決定起始現金與袋子裡的籌碼。點一張，再按「開始」。</p>
+  <div class="jobs">
+    <button class="job sel" data-job="滷味攤">
+      <div class="nm">滷味攤 <small>穩健</small></div>
+      <div class="row"><span>起始現金</span><span>$120</span></div>
+      <div class="row"><span>黑天鵝門檻</span><span>4</span></div>
+      <div class="toks"><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small bs">黑</span><span class="tok small bs">黑</span></div>
+    </button>
+    <button class="job" data-job="雞排攤">
+      <div class="nm">雞排攤 <small>平均</small></div>
+      <div class="row"><span>起始現金</span><span>$100</span></div>
+      <div class="row"><span>黑天鵝門檻</span><span>4</span></div>
+      <div class="toks"><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋20</span><span class="tok small in">＋20</span><span class="tok small bs">黑</span><span class="tok small bs">黑</span><span class="tok small bs">黑</span></div>
+    </button>
+    <button class="job" data-job="飲料攤">
+      <div class="nm">飲料攤 <small>賭徒</small></div>
+      <div class="row"><span>起始現金</span><span>$80</span></div>
+      <div class="row"><span>黑天鵝門檻</span><span>5</span></div>
+      <div class="toks"><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋10</span><span class="tok small in">＋20</span><span class="tok small in">＋20</span><span class="tok small in">＋40</span><span class="tok small bs">黑</span><span class="tok small bs">黑</span><span class="tok small bs">黑</span><span class="tok small bs">黑</span></div>
+    </button>
+  </div>
+  <div class="foot"><button class="btn solid big" id="startBtn">開始這一季</button></div>
+</section>
+
+<!-- 畫面 2：遊玩中 -->
+<section class="scr play" data-scr="2">
+  <div class="hd"><span>第 <strong>4</strong> / 12 回合・你的回合</span><span>滷味攤</span></div>
+  <div class="L">
+    <div class="stat">
+      <div><div class="k">暫存收入（本回合）</div><div class="v" id="pend">$40</div></div>
+      <div><div class="k">黑天鵝 / 門檻</div><div class="v"><span id="bsv">2</span><small> / 4</small><span class="bsq" id="bsq"><i class="f"></i><i class="f"></i><i></i><i></i></span></div></div>
+      <div><div class="k">現金</div><div class="v">$80</div></div>
+      <div><div class="k">袋子剩餘</div><div class="v"><span id="bagn">7</span><small> 顆</small></div><div class="k">收入 5・黑天鵝 2</div></div>
+    </div>
+    <div class="sec">
+      <div class="k"><span>已翻出</span><span id="drawn">5 顆</span></div>
+      <div class="track" id="track"></div>
+    </div>
+    <div class="acts">
+      <button class="btn solid big" id="drawBtn">再翻</button>
+      <button class="btn big" id="stopBtn">停手</button>
+    </div>
+  </div>
+  <div class="R">
+    <div class="sec mk">
+      <div class="k" style="margin-top:10px"><span>市場（停手後可買 0–1 張）</span><span>先買先得</span></div>
+      <div class="mrow"><div><div class="n">第二口鍋</div><div class="d">袋子加入 收入＋20 ×1</div></div><div class="p">$60</div></div>
+      <div class="mrow"><div><div class="n">冷藏櫃</div><div class="d">袋子加入 收入＋10 ×2；翻到黑天鵝可放回一次</div></div><div class="p">$90</div></div>
+      <div class="mrow dim"><div><div class="n">常客名單</div><div class="d">袋子加入 收入＋40 ×1（面值計入淨資產）</div></div><div class="p">$120</div></div>
+    </div>
+  </div>
+  <div class="ai"><span><b>對手 阿明</b>（雞排攤）</span><span>現金 $110</span><span>淨資產 $170</span><span>上回合翻 5 顆・停手</span></div>
+</section>
+
+<!-- 畫面 3：回合結算／購買 -->
+<section class="scr settle" data-scr="3">
+  <div class="hd"><span>第 <strong>4</strong> / 12 回合・結算</span><span>滷味攤</span></div>
+  <div class="body">
+    <div>
+      <h1>本回合入帳</h1>
+      <div class="big">＋$40</div>
+      <div class="eq">停手於第 5 顆・黑天鵝 2 / 4　→　現金 $80 → <b>$120</b></div>
+    </div>
+    <div>
+      <p class="sub" style="margin-bottom:10px">可用 $120 買 0–1 張（或一份保險）。點一項，再按「下一回合」。</p>
+      <div class="buy" id="buy">
+        <button data-buy="第二口鍋"><div><div class="n">第二口鍋</div><div class="d">袋子加入 收入＋20 ×1</div></div><div class="p">$60</div></button>
+        <button data-buy="雨棚"><div><div class="n">雨棚</div><div class="d">翻到「下雨」不算黑天鵝（每回合一次）</div></div><div class="p">$50</div></button>
+        <button data-buy="常客名單"><div><div class="n">常客名單</div><div class="d">袋子加入 收入＋40 ×1；面值計入淨資產</div></div><div class="p">$120</div></button>
+        <button class="ins" data-buy="保險"><div><div class="n">保險</div><div class="d">從袋子永久移除 1 顆黑天鵝</div></div><div class="p">$40</div></button>
+      </div>
+      <div class="foot"><button class="btn" id="skipBtn" style="flex:0 0 auto">不買</button><button class="btn solid big" id="nextBtn" style="min-height:64px;font-size:22px">下一回合</button></div>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+</div>
+</main>
+<script>
+(function(){
+  // ===== 預覽外殼 =====
+  var q = new URLSearchParams(location.search);
+  var device = document.getElementById('device'), wrap = document.getElementById('wrap'), stage = document.getElementById('stage');
+  var SIZES = {phone:[390,844], ipad:[1180,820]};
+  var bare = q.get('bare') === '1';
+  if (bare) document.body.classList.add('bare');
+  function setDev(d){
+    device.className = 'device ' + d;
+    document.querySelectorAll('.tb [data-dev]').forEach(function(b){ b.classList.toggle('on', b.dataset.dev === d); });
+    fit();
+  }
+  function fit(){
+    var d = device.classList.contains('ipad') ? 'ipad' : 'phone';
+    var w = SIZES[d][0], h = SIZES[d][1];
+    var tbH = bare ? 0 : document.querySelector('.tb').offsetHeight;
+    stage.style.height = (window.innerHeight - tbH) + 'px';
+    var pad = bare ? 0 : 24;
+    var s = bare ? 1 : Math.min(1, (window.innerWidth - pad) / w, (window.innerHeight - tbH - pad) / h);
+    device.style.transform = 'scale(' + s + ')';
+    wrap.style.width = (w * s) + 'px'; wrap.style.height = (h * s) + 'px';
+  }
+  function setScr(n){
+    document.querySelectorAll('.app .scr').forEach(function(s){ s.classList.toggle('on', s.dataset.scr === String(n)); });
+    document.querySelectorAll('.tb [data-scr]').forEach(function(b){ b.classList.toggle('on', b.dataset.scr === String(n)); });
+    device.querySelector('.app').scrollTop = 0;
+  }
+  document.querySelectorAll('.tb [data-dev]').forEach(function(b){ b.addEventListener('click', function(){ setDev(b.dataset.dev); }); });
+  document.querySelectorAll('.tb [data-scr]').forEach(function(b){ b.addEventListener('click', function(){ setScr(b.dataset.scr); }); });
+  window.addEventListener('resize', fit);
+
+  // ===== 示意互動（不實作規則） =====
+  var drawnList = [{t:'in',v:10},{t:'in',v:20},{t:'bs',n:'稽查'},{t:'in',v:10},{t:'bs',n:'下雨'}];
+  var nextDraws = [{t:'in',v:10},{t:'bs',n:'跳電'},{t:'in',v:20},{t:'in',v:10},{t:'bs',n:'稽查'}];
+  var pend = 40, bs = 2, bag = 7;
+  var track = document.getElementById('track');
+  function renderTrack(){
+    track.innerHTML = '';
+    drawnList.forEach(function(k){
+      var s = document.createElement('span');
+      s.className = 'tok ' + k.t;
+      s.textContent = k.t === 'in' ? ('＋' + k.v) : k.n;
+      track.appendChild(s);
+    });
+    document.getElementById('drawn').textContent = drawnList.length + ' 顆';
+    document.getElementById('pend').textContent = '$' + pend;
+    document.getElementById('bsv').textContent = bs;
+    document.getElementById('bagn').textContent = bag;
+    var sq = document.getElementById('bsq').children;
+    for (var i = 0; i < sq.length; i++) sq[i].className = i < bs ? 'f' : '';
+  }
+  document.getElementById('drawBtn').addEventListener('click', function(){
+    if (!nextDraws.length || bag <= 0) return;
+    var k = nextDraws.shift(); drawnList.push(k); bag--;
+    if (k.t === 'in') pend += k.v; else bs++;
+    renderTrack();
+    if (bs >= 4) { setTimeout(function(){ setScr(3); }, 400); }
+  });
+  document.getElementById('stopBtn').addEventListener('click', function(){ setScr(3); });
+  document.getElementById('startBtn').addEventListener('click', function(){ setScr(2); });
+  document.getElementById('nextBtn').addEventListener('click', function(){ setScr(2); });
+  document.getElementById('skipBtn').addEventListener('click', function(){ document.querySelectorAll('#buy button').forEach(function(b){ b.classList.remove('sel'); }); });
+  document.querySelectorAll('.job').forEach(function(j){ j.addEventListener('click', function(){ document.querySelectorAll('.job').forEach(function(x){ x.classList.remove('sel'); }); j.classList.add('sel'); }); });
+  document.querySelectorAll('#buy button').forEach(function(b){ b.addEventListener('click', function(){ document.querySelectorAll('#buy button').forEach(function(x){ x.classList.remove('sel'); }); b.classList.add('sel'); }); });
+
+  renderTrack();
+  setDev(q.get('dev') === 'ipad' ? 'ipad' : 'phone');
+  setScr(q.get('scr') || '1');
+})();
+</script>
+</body>
+</html>

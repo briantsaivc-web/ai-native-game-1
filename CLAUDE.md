@@ -34,6 +34,7 @@ docs/design/      G2 企劃：故事、世界觀、核心迴圈
 docs/spec/        G3 規格：game-spec.md、資料格式、action 清單
 docs/ui/          G3.5 UI 三版靜態稿與 decision-log.md
 docs/tickets/     任務單與分派單（T-<編號>/）
+docs/reviews/     G4.5 外部 AI 交叉審查：審查包、外部意見原文、裁決表（T-<編號>/）
 docs/qa/          QA 報告
 docs/reports/     各角色回報（長輸出寫這裡）
 docs/templates/   任務單、ADR、回報、UI 三版對照表範本
@@ -82,6 +83,7 @@ docs/changelog/   CHANGELOG.md
 | systems-engineer | docs/spec/（含 ADR）、docs/tickets/ | 大量實作程式碼、改版本號 |
 | ui-designer | docs/ui/ | 改 src/、改規則 |
 | game-engineer | src/engine/、src/ui/、src/data/、tests/、build/ | 改版本號、寫 changelog、push |
+| review-packager | docs/reviews/ | 改 src/、修程式、替外部 AI 的意見背書 |
 | qa-tester | tests/、docs/qa/ | 改 src/（只回報，不修） |
 | code-reviewer | 無（唯讀） | 改任何檔案 |
 | release-manager | docs/changelog/、版本號、build 產物 | 改功能程式、push |
@@ -99,8 +101,11 @@ docs/changelog/   CHANGELOG.md
 | G3 | 規格 | systems-engineer | `docs/spec/game-spec.md`、資料格式、分派單 | 否（併入 G3.5 停點） |
 | G3.5 | UI 三版 | ui-designer | `docs/ui/v<n>-{A,B,C}.html`、對照表、decision-log | **是**：製作人三選一（或指定混合） |
 | G4 | 製作 | game-engineer | `src/`、`tests/`、`build/`、回報 | 否 |
+| G4.5 | 外部 AI 交叉審查 | review-packager ＋ 製作人 | `docs/reviews/T-<編號>/review-pack.md`（給外部 AI 的審查包）、`external-<AI名>.md`（外部意見原文）、`triage.md`（裁決表） | **是**：製作人把審查包貼給至少一個外部 AI（ChatGPT、Gemini 等），並把回覆貼回；Blocker 級採納項回 G4 修完才進 G5 |
 | G5 | 測試 | qa-tester → code-reviewer | `docs/qa/`、審查 findings | 否（判定退件則回 G4） |
 | G6 | 發布 | release-manager | 版本號、changelog、`index.html`、commit 訊息 | **是**：製作人驗收後親自 push |
 | G7 | 回顧 | course-recorder（＋全員） | 課程章節、下一輪改善清單 | — |
 
-對應技能：G1 `/research`、G2 `/plan-story`、G3＋G3.5 `/spec`、G4 `/build`、G5 `/qa-gate`、G6 `/release`。course-recorder 在每個 Gate 結束時由幕僚長委派，不獨立成技能。
+對應技能：G1 `/research`、G2 `/plan-story`、G3＋G3.5 `/spec`、G4 `/build`、G4.5 `/cross-review`、G5 `/qa-gate`、G6 `/release`。
+
+G4.5 的原則（沿用《讓 AI 互相抓錯：交叉審查與實證裁決》一章）：驗的人不能是寫的人；外部 AI 只給意見、不重寫程式；「三個 AI 都同意」不是證據，有分歧的項目以**實證裁決**（寫最小測試讓兩方說法對決）定案；最多兩輪，兩輪後仍無共識由製作人裁決或列入待辦。course-recorder 在每個 Gate 結束時由幕僚長委派，不獨立成技能。
